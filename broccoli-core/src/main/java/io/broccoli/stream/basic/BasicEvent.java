@@ -48,4 +48,15 @@ public class BasicEvent<I extends Comparable<? super I>> implements Event<I> {
     public I version() {
         return version;
     }
+
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("BasicEvent{");
+        sb.append("row=").append(row);
+        sb.append(", eventType=").append(eventType);
+        sb.append(", version=").append(version);
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -24,7 +24,6 @@ import io.broccoli.stream.Streamable;
 import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.collection.List;
-import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 
 /**
@@ -75,11 +74,11 @@ public class BasicProjectionStreamable<I extends Comparable<? super I>> implemen
                         }
                         cache.put(key, newCount, e.version());
                         if (count == 0 && newCount > count) {
-                            return new BasicEvent<I>(key, Event.EventType.ADD, e.version());
+                            return new BasicEvent<>(key, Event.EventType.ADD, e.version());
                         } else if (count > 0 && newCount == 0) {
-                            return new BasicEvent<I>(key, Event.EventType.REMOVE, e.version());
+                            return new BasicEvent<>(key, Event.EventType.REMOVE, e.version());
                         } else {
-                            return new BasicNoopEvent<I>(e.version());
+                            return new BasicNoopEvent<>(e.version());
                         }
                     default:
                         throw new IllegalArgumentException("Unknown event type " + e);

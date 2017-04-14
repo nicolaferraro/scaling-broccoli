@@ -17,12 +17,13 @@ package io.broccoli.stream;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import io.broccoli.stream.basic.Aggregate;
 import io.broccoli.stream.basic.AggregateFactory;
 import io.broccoli.stream.basic.BasicAggregateStreamable;
+import io.broccoli.stream.basic.BasicCartesianStreamable;
 import io.broccoli.stream.basic.BasicCountAggregate;
+import io.broccoli.stream.basic.BasicEvent;
 import io.broccoli.stream.basic.BasicFilterStreamable;
 import io.broccoli.stream.basic.BasicFluxStreamable;
 import io.broccoli.stream.basic.BasicLastStreamable;
@@ -31,12 +32,12 @@ import io.broccoli.stream.basic.BasicRow;
 import io.broccoli.stream.basic.BasicSetCacheStreamable;
 import io.broccoli.util.TestStreamFactory;
 import io.broccoli.versioning.BasicVersioningSystem;
-import io.broccoli.versioning.VersioningSystem;
 
 import org.junit.Test;
 
 import javaslang.collection.List;
 import javaslang.collection.Traversable;
+import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 
 import static org.junit.Assert.assertEquals;
@@ -304,6 +305,66 @@ public class StreamableTest {
         List<Row> rows0 = List.ofAll(count.stream(v.get(0)).collectList().block());
         assertEquals(0, rows0.size());
 
+    }
+
+    @Test
+    public void testCartesianStreamable() throws InterruptedException {
+        BasicVersioningSystem v = new BasicVersioningSystem();
+        Streamable<String> source1 = new BasicFluxStreamable<>("source1",
+                Flux.just(
+                        TestStreamFactory.add(v.next(), "1", "A"),
+                        TestStreamFactory.add(v.next(), "2", "B"),
+                        TestStreamFactory.remove(v.next(), "2", "B")
+                ));
+        Streamable<String> source2 = new BasicFluxStreamable<>("source2",
+                Flux.just(
+                        TestStreamFactory.add(v.next(), Option.of("r"), "--1", "--A"),
+                        TestStreamFactory.add(v.next(), Option.of("r"), "--2", "--B"),
+                        TestStreamFactory.remove(v.next(), Option.of("r"), "--2", "--B")
+                ));
+
+        BasicCartesianStreamable<String> cartesian = new BasicCartesianStreamable<>("prod", v, source1, source2);
+
+        BasicSetCacheStreamable<String> cache = new BasicSetCacheStreamable<>("cache", cartesian, v);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        cache.changes()
+                .doOnComplete(latch::countDown)
+                .subscribe();
+
+        latch.await(5, TimeUnit.SECONDS);
+
+        List<Row> rows6 = List.ofAll(cache.stream(v.get(6)).collectList().block());
+        assertEquals(1, rows6.size());
+
+        List<Row> rows5 = List.ofAll(cache.stream(v.get(5)).collectList().block());
+        assertEquals(2, rows5.size());
+    }
+
+    @Test
+    public void testCartesianStreamableEvents() throws InterruptedException {
+        BasicVersioningSystem v = new BasicVersioningSystem();
+        Streamable<String> source1 = new BasicFluxStreamable<>("source1",
+                Flux.just(
+                        TestStreamFactory.add(v.next(), "1", "A"),
+                        TestStreamFactory.add(v.next(), "2", "B"),
+                        TestStreamFactory.remove(v.next(), "2", "B")
+                ));
+        Streamable<String> source2 = new BasicFluxStreamable<>("source2",
+                Flux.just(
+                        TestStreamFactory.add(v.next(), Option.of("r"), "--1", "--A"),
+                        TestStreamFactory.add(v.next(), Option.of("r"), "--2", "--B"),
+                        TestStreamFactory.remove(v.next(), Option.of("r"), "--2", "--B")
+                ));
+
+        BasicCartesianStreamable<String> cartesian = new BasicCartesianStreamable<>("prod", v, source1, source2);
+
+        List<Event.EventType> events = List.ofAll(cartesian.changes()
+                .filter(e -> e instanceof BasicEvent && e.eventType() != Event.EventType.NOOP)
+                .map(Event::eventType)
+                .collectList().block());
+
+        assertEquals(List.of(Event.EventType.ADD, Event.EventType.ADD, Event.EventType.REMOVE), events);
     }
 
 }

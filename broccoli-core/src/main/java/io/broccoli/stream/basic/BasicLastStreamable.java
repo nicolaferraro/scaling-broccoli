@@ -87,7 +87,8 @@ public class BasicLastStreamable<I extends Comparable<? super I>, U extends Comp
                         } else {
                             return List.of(
                                     new BasicEvent<>(previousBest, Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
-                                    new BasicEvent<>(newBest, Event.EventType.ADD, versioningSystem.newSubVersion(e.version()))
+                                    new BasicEvent<>(newBest, Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
+                                    new BasicNoopEvent<>(e.version())
                             );
                         }
                     }
@@ -101,10 +102,11 @@ public class BasicLastStreamable<I extends Comparable<? super I>, U extends Comp
                     } else if (newBest.isDefined()) {
                         return List.of(
                                 new BasicEvent<>(previousBest, Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
-                                new BasicEvent<>(newBest.get(), Event.EventType.ADD, versioningSystem.newSubVersion(e.version()))
+                                new BasicEvent<>(newBest.get(), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
+                                new BasicNoopEvent<>(e.version())
                         );
                     } else {
-                        return List.of(new BasicEvent<>(previousBest, Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())));
+                        return List.of(new BasicEvent<>(previousBest, Event.EventType.REMOVE, e.version()));
                     }
                 }
 

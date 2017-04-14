@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
+@FunctionalInterface
 public interface Replayable<I extends Comparable<? super I>> {
 
     Flux<Row> stream(I version);

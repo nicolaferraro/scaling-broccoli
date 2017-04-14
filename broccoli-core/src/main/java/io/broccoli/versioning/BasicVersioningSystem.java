@@ -36,37 +36,38 @@ public class BasicVersioningSystem implements VersioningSystem<String> {
 
     @Override
     public String zero() {
-        return pad(FILLER);
+        return pad(0, FILLER);
     }
 
     @Override
     public String next() {
-        return pad(counter.incrementAndGet());
+        return pad(counter.incrementAndGet(), FILLER) + "." + pad(9, '9');
     }
 
     @Override
     public String get(long counter) {
-        return pad(counter);
+        return pad(counter, FILLER) + "." + pad(9, '9');
     }
 
     @Override
     public String newSubVersion(String version) {
-        subCounters.putIfAbsent(version, new AtomicLong(0));
-        return version + "." + pad(subCounters.get(version).incrementAndGet());
+        String raw = rawVersion(version);
+        subCounters.putIfAbsent(raw, new AtomicLong(0));
+        return raw + "." + pad(subCounters.get(raw).incrementAndGet(), FILLER);
     }
 
     @Override
     public String rawVersion(String subVersion) {
-        return subVersion.substring(PAD_LENGTH);
+        return subVersion.substring(0, PAD_LENGTH);
     }
 
-    private String pad(Object o) {
+    private String pad(Object o, char filler) {
         if (o == null) {
             return null;
         }
         String str = o.toString();
         while (str.length() < PAD_LENGTH) {
-            str = FILLER + str;
+            str = filler + str;
         }
         return str;
     }

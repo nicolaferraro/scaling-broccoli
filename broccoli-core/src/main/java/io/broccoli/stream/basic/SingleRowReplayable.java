@@ -15,42 +15,26 @@
  */
 package io.broccoli.stream.basic;
 
-import io.broccoli.stream.Event;
+import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
+
+import reactor.core.publisher.Flux;
 
 /**
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicNoopEvent<I extends Comparable<? super I>> implements Event<I> {
+public class SingleRowReplayable<I extends Comparable<? super I>> implements Replayable<I> {
 
-    private I version;
+    private Row row;
 
-    public BasicNoopEvent(I version) {
-        this.version = version;
+    public SingleRowReplayable(Row row) {
+        this.row = row;
     }
 
     @Override
-    public Row row() {
-        return null;
+    public Flux<Row> stream(I version) {
+        return Flux.just(row);
     }
 
-    @Override
-    public EventType eventType() {
-        return EventType.NOOP;
-    }
-
-    @Override
-    public I version() {
-        return version;
-    }
-
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("BasicNoopEvent{");
-        sb.append("version=").append(version);
-        sb.append('}');
-        return sb.toString();
-    }
 }

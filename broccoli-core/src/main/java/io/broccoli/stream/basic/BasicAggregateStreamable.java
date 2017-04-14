@@ -91,7 +91,8 @@ public class BasicAggregateStreamable<I extends Comparable<? super I>> implement
                         } else {
                             return List.of(
                                     new BasicEvent<>(append(groupByKey, previousAggregates), Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
-                                    new BasicEvent<>(append(groupByKey, newAggregates), Event.EventType.ADD, versioningSystem.newSubVersion(e.version()))
+                                    new BasicEvent<>(append(groupByKey, newAggregates), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
+                                    new BasicNoopEvent<>(e.version())
                             );
                         }
                     }
@@ -105,7 +106,8 @@ public class BasicAggregateStreamable<I extends Comparable<? super I>> implement
                     } else {
                         return List.of(
                                 new BasicEvent<>(append(groupByKey, previousAggregates), Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
-                                new BasicEvent<>(append(groupByKey, newAggregates), Event.EventType.ADD, versioningSystem.newSubVersion(e.version()))
+                                new BasicEvent<>(append(groupByKey, newAggregates), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
+                                new BasicNoopEvent<>(e.version())
                         );
                     }
                 }
