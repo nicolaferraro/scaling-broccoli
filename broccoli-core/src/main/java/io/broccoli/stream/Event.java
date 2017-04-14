@@ -28,7 +28,7 @@ public interface Event<I extends Comparable<? super I>> {
     I version();
 
     enum EventType {
-        ADD, REMOVE
+        ADD, REMOVE, NOOP
     }
 
 }

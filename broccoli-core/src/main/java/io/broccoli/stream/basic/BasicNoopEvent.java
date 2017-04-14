@@ -13,27 +13,36 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package io.broccoli.collection;
+package io.broccoli.stream.basic;
 
-import javaslang.control.Option;
-import reactor.core.publisher.Flux;
+import io.broccoli.stream.Event;
+import io.broccoli.stream.Row;
 
 /**
  * @author nicola
- * @since 12/04/2017
+ * @since 14/04/2017
  */
-public interface VersionedMap<K, V, I extends Comparable<? super I>> {
+public class BasicNoopEvent<I extends Comparable<? super I>> implements Event<I> {
 
-    void put(K key, V value, I version);
+    private I version;
 
-    Option<V> get(K key, I version);
+    public BasicNoopEvent(I version) {
+        this.version = version;
+    }
 
-    void delete(K key, I version);
+    @Override
+    public Row row() {
+        return null;
+    }
 
-    I version();
+    @Override
+    public EventType eventType() {
+        return EventType.NOOP;
+    }
 
-    Flux<K> streamKeys(I version);
-
-    Flux<V> streamValues(I version);
+    @Override
+    public I version() {
+        return version;
+    }
 
 }

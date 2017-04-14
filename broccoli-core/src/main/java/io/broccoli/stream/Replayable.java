@@ -13,27 +13,16 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package io.broccoli.collection;
+package io.broccoli.stream;
 
-import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 
 /**
  * @author nicola
- * @since 12/04/2017
+ * @since 14/04/2017
  */
-public interface VersionedMap<K, V, I extends Comparable<? super I>> {
+public interface Replayable<I extends Comparable<? super I>> {
 
-    void put(K key, V value, I version);
-
-    Option<V> get(K key, I version);
-
-    void delete(K key, I version);
-
-    I version();
-
-    Flux<K> streamKeys(I version);
-
-    Flux<V> streamValues(I version);
+    Flux<Row> stream(I version);
 
 }

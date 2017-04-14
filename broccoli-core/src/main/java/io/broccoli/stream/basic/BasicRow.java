@@ -47,4 +47,25 @@ public class BasicRow implements Row {
     public Cell<?> cell(int pos) {
         return cells.get(pos);
     }
+
+    @Override
+    public Cell<?> cell(String name) {
+        return cell(cells.indexWhere(c -> name.equals(c.name())));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        BasicRow basicRow = (BasicRow) o;
+
+        return cells != null ? cells.equals(basicRow.cells) : basicRow.cells == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return cells != null ? cells.hashCode() : 0;
+    }
 }

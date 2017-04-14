@@ -49,7 +49,13 @@ public class BasicFilterStreamable<I extends Comparable<? super I>> implements S
     @Override
     public Flux<Event<I>> changes() {
         return source.changes()
-                .filter(e -> filter.test(e.row()));
+                .map(e -> {
+                    if (filter.test(e.row())) {
+                        return e;
+                    } else {
+                        return new BasicNoopEvent<>(e.version());
+                    }
+                });
     }
 
 }

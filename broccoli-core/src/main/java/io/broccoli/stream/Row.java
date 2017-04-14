@@ -30,4 +30,6 @@ public interface Row {
 
     Cell<?> cell(int pos);
 
+    Cell<?> cell(String name);
+
 }

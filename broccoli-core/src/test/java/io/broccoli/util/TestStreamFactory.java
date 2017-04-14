@@ -32,13 +32,13 @@ public final class TestStreamFactory {
     }
 
     public static <I extends Comparable<? super I>> Event<I> add(I version, String... data) {
-        int[] idx = new int[]{1};
-        return new BasicEvent<I>(new BasicRow(List.of(data).map(o -> new BasicCell<String>("s" + (idx[0]++), String.class, o))), Event.EventType.ADD, version);
+        int[] idx = new int[]{0};
+        return new BasicEvent<I>(new BasicRow(List.of(data).map(o -> new BasicCell<>("s" + (idx[0]++), String.class, o))), Event.EventType.ADD, version);
     }
 
     public static <I extends Comparable<? super I>> Event<I> remove(I version, String... data) {
-        int[] idx = new int[]{1};
-        return new BasicEvent<I>(new BasicRow(List.of(data).map(o -> new BasicCell<String>("s" + (idx[0]++), String.class, o))), Event.EventType.REMOVE, version);
+        int[] idx = new int[]{0};
+        return new BasicEvent<I>(new BasicRow(List.of(data).map(o -> new BasicCell<>("s" + (idx[0]++), String.class, o))), Event.EventType.REMOVE, version);
     }
 
 }

@@ -49,4 +49,25 @@ public class BasicCell<T> implements Cell<T> {
     public T value() {
         return value;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        BasicCell<?> basicCell = (BasicCell<?>) o;
+
+        if (name != null ? !name.equals(basicCell.name) : basicCell.name != null) return false;
+        if (type != null ? !type.equals(basicCell.type) : basicCell.type != null) return false;
+        return value != null ? value.equals(basicCell.value) : basicCell.value == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        return result;
+    }
 }
