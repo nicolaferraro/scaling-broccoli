@@ -15,6 +15,7 @@
  */
 package io.broccoli.collection;
 
+import javaslang.Tuple2;
 import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 
@@ -35,5 +36,7 @@ public interface VersionedMap<K, V, I extends Comparable<? super I>> {
     Flux<K> streamKeys(I version);
 
     Flux<V> streamValues(I version);
+
+    Flux<Tuple2<K, V>> streamEntries(I version);
 
 }

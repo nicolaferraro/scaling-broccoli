@@ -17,6 +17,7 @@ package io.broccoli.collection;
 
 import io.broccoli.util.Arguments;
 
+import javaslang.Tuple;
 import javaslang.Tuple2;
 import javaslang.collection.HashMap;
 import javaslang.collection.List;
@@ -79,6 +80,14 @@ public class SimpleVersionedMap<K, V, I extends Comparable<? super I>> implement
         return Flux.fromIterable(map)
                 .filter(t -> t._2.getValue(version).isDefined())
                 .map(Tuple2::_1);
+    }
+
+    @Override
+    public Flux<Tuple2<K, V>> streamEntries(I version) {
+        return Flux.fromIterable(map)
+                .map(t -> Tuple.of(t._1, t._2.getValue(version)))
+                .filter(t -> t._2.isDefined())
+                .map(t -> Tuple.of(t._1, t._2.get()));
     }
 
     private Values<V, I> getOrCreate(K key) {

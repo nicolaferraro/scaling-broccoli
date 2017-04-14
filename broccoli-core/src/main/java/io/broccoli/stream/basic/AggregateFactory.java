@@ -13,18 +13,18 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package io.broccoli.model;
+package io.broccoli.stream.basic;
 
-import reactor.core.publisher.Flux;
+import io.broccoli.stream.Cell;
+import io.broccoli.stream.Row;
 
 /**
  * @author nicola
- * @since 13/04/2017
+ * @since 14/04/2017
  */
-public interface ResultSet {
+@FunctionalInterface
+public interface AggregateFactory<T> {
 
-    Schema schema();
-
-    Flux<Row> rows();
+    Aggregate<T> newAggregate();
 
 }

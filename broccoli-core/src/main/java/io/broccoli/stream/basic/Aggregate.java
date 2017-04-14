@@ -13,22 +13,23 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package io.broccoli.model;
+package io.broccoli.stream.basic;
 
-import javaslang.control.Option;
+import io.broccoli.stream.Cell;
+import io.broccoli.stream.Row;
 
 /**
  * @author nicola
- * @since 13/04/2017
+ * @since 14/04/2017
  */
-public interface Schema {
+public interface Aggregate<T> {
 
-    int columnCount();
+    Aggregate<T> add(Row row);
 
-    String columnName(int pos);
+    Aggregate<T> remove(Row row);
 
-    Option<Integer> columnPos(String name);
+    Cell<T> get();
 
-    boolean isKey(int pos);
+    long supportingRows();
 
 }
