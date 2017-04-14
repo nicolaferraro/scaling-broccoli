@@ -113,6 +113,6 @@ public class BasicLastStreamable<U extends Comparable<? super U>> implements Str
 
             }
             return List.of(e);
-        });
+        }).cache(0);
     }
 }

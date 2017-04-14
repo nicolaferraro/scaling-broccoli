@@ -84,7 +84,7 @@ public class BasicProjectionStreamable implements Streamable, Replayable {
                     default:
                         throw new IllegalArgumentException("Unknown event type " + e);
                     }
-                });
+                }).cache(0);
     }
 
     private Row projection(Row original) {

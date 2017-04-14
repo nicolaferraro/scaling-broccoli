@@ -114,7 +114,7 @@ public class BasicAggregateStreamable implements Streamable, Replayable {
                 }
             }
             return List.of(e);
-        });
+        }).cache(0);
     }
 
     private Row append(Row row, Traversable<Aggregate<?>> aggregates) {

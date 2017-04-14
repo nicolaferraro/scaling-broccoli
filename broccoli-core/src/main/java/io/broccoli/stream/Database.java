@@ -13,36 +13,25 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package io.broccoli.stream.basic;
+package io.broccoli.stream;
 
-import io.broccoli.stream.Event;
-import io.broccoli.stream.Streamable;
-
+import javaslang.collection.Traversable;
 import reactor.core.publisher.Flux;
 
 /**
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicFluxStreamable implements Streamable {
+public interface Database {
 
-    private String name;
+    Traversable<Table> tables();
 
-    private Flux<Event> flux;
+    interface Builder {
 
-    public BasicFluxStreamable(String name, Flux<Event> flux) {
-        this.name = name;
-        this.flux = flux;
-    }
+        Builder sourceTable(String name, Flux<Event> stream);
 
-    @Override
-    public String name() {
-        return name;
-    }
+        Database build();
 
-    @Override
-    public Flux<Event> changes() {
-        return flux.cache(0); // always hot
     }
 
 }

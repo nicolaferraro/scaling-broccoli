@@ -15,6 +15,7 @@
  */
 package io.broccoli.stream;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

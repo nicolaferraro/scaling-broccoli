@@ -21,6 +21,7 @@ import io.broccoli.stream.Event;
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
 import io.broccoli.stream.Streamable;
+import io.broccoli.stream.Table;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
@@ -31,7 +32,7 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicSetCacheStreamable implements Streamable, Replayable {
+public class BasicSetCacheStreamable implements Streamable, Replayable, Table {
 
     private String name;
 
@@ -76,6 +77,6 @@ public class BasicSetCacheStreamable implements Streamable, Replayable {
                         }
                     }
                     return e;
-                });
+                }).cache(0);
     }
 }
