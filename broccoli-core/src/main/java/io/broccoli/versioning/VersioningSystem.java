@@ -31,4 +31,6 @@ public interface VersioningSystem {
 
     Version rawVersion(Version subVersion);
 
+    boolean isRawVersion(Version version);
+
 }

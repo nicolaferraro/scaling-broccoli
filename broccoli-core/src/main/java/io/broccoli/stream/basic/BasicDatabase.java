@@ -15,16 +15,22 @@
  */
 package io.broccoli.stream.basic;
 
+import java.util.function.Function;
+
 import io.broccoli.stream.Database;
 import io.broccoli.stream.Event;
+import io.broccoli.stream.Streamable;
 import io.broccoli.stream.Table;
+import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.collection.HashMap;
+import javaslang.collection.List;
 import javaslang.collection.Map;
 import javaslang.collection.Seq;
 import javaslang.collection.Traversable;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.ReplayProcessor;
 
 /**
  * @author nicola
@@ -32,15 +38,50 @@ import reactor.core.publisher.Flux;
  */
 public class BasicDatabase implements Database {
 
+    private VersioningSystem v;
+
     private Seq<Table> tables;
 
-    private BasicDatabase(Seq<Table> tables) {
+    private ReplayProcessor<Version> currentVersion;
+
+    private boolean started;
+
+    private BasicDatabase(VersioningSystem v, Seq<Table> tables) {
+        this.v = v;
         this.tables = tables;
+        this.currentVersion = ReplayProcessor.cacheLast();
+        this.started = false;
     }
 
     @Override
     public Traversable<Table> tables() {
         return this.tables;
+    }
+
+    @Override
+    public void start() {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+
+        List<Streamable> allStreams = List.ofAll(tables);
+        int leafs = 1; // TODO make it dynamically computed
+        Flux.fromIterable(allStreams).flatMap(Streamable::changes)
+                .map(Event::version)
+                .filter(v::isRawVersion)
+                .groupBy(ver -> ver)
+                .flatMap(vg ->
+                        vg.buffer(leafs)
+                                .filter(l -> l.size() == leafs)
+                                .map(l -> l.get(0))
+                ).subscribe(currentVersion);
+
+        this.started = true;
+    }
+
+    @Override
+    public Flux<Version> currentVersion() {
+        return currentVersion;
     }
 
     public static class Builder implements Database.Builder {
@@ -68,7 +109,10 @@ public class BasicDatabase implements Database {
 
         @Override
         public Database build() {
-            return new BasicDatabase(tables.values());
+            if (tables.size() == 0) {
+                throw new IllegalStateException("No tables defined");
+            }
+            return new BasicDatabase(v, tables.values());
         }
     }
 }

@@ -15,10 +15,13 @@
  */
 package io.broccoli.stream;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import io.broccoli.stream.basic.BasicDatabase;
-import io.broccoli.stream.basic.BasicFluxStreamable;
 import io.broccoli.util.TestStreamFactory;
 import io.broccoli.versioning.BasicVersioningSystem;
+import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import org.junit.Before;
@@ -43,7 +46,7 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testDB() {
+    public void testDB() throws InterruptedException {
 
         Flux<Event> source1 = Flux.just(
                 TestStreamFactory.add(v.next(), "1"),
@@ -62,7 +65,19 @@ public class DatabaseTest {
                 .sourceTable("source2", source2)
                 .build();
 
+        db.start();
+
+        Version[] versions = new Version[1];
+        CountDownLatch latch = new CountDownLatch(1);
+        db.currentVersion()
+                .doOnNext(version -> versions[0] = version)
+                .doOnComplete(latch::countDown)
+                .subscribe();
+
         assertEquals(2, db.tables().size());
+
+        latch.await(5, TimeUnit.SECONDS);
+        assertEquals(v.get(6), versions[0]);
     }
 
 }

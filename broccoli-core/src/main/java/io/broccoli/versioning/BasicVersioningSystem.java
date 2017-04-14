@@ -61,6 +61,11 @@ public class BasicVersioningSystem implements VersioningSystem {
         return new StringVersion(((StringVersion) subVersion).v.substring(0, PAD_LENGTH));
     }
 
+    @Override
+    public boolean isRawVersion(Version version) {
+        return ((StringVersion) version).v.endsWith(pad(9, '9'));
+    }
+
     private String pad(Object o, char filler) {
         if (o == null) {
             return null;
@@ -102,6 +107,14 @@ public class BasicVersioningSystem implements VersioningSystem {
             }
             StringVersion sv = (StringVersion) version;
             return this.v.compareTo(sv.v);
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("StringVersion{");
+            sb.append("v='").append(v).append('\'');
+            sb.append('}');
+            return sb.toString();
         }
     }
 
