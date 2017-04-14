@@ -24,13 +24,13 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicFluxStreamable<I extends Comparable<? super I>> implements Streamable<I> {
+public class BasicFluxStreamable implements Streamable {
 
     private String name;
 
-    private Flux<Event<I>> flux;
+    private Flux<Event> flux;
 
-    public BasicFluxStreamable(String name, Flux<Event<I>> flux) {
+    public BasicFluxStreamable(String name, Flux<Event> flux) {
         this.name = name;
         this.flux = flux;
     }
@@ -41,7 +41,7 @@ public class BasicFluxStreamable<I extends Comparable<? super I>> implements Str
     }
 
     @Override
-    public Flux<Event<I>> changes() {
+    public Flux<Event> changes() {
         return flux;
     }
 

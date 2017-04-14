@@ -19,6 +19,7 @@ import io.broccoli.stream.Event;
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
 import io.broccoli.stream.Streamable;
+import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.Tuple;
@@ -30,20 +31,20 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicCartesianStreamable<I extends Comparable<? super I>> implements Streamable<I> {
+public class BasicCartesianStreamable implements Streamable {
 
     private String name;
-    private VersioningSystem<I> versioningSystem;
-    private List<Streamable<I>> sources;
+    private VersioningSystem versioningSystem;
+    private List<Streamable> sources;
 
-    public BasicCartesianStreamable(String name, VersioningSystem<I> versioningSystem, Streamable<I>... sources) {
+    public BasicCartesianStreamable(String name, VersioningSystem versioningSystem, Streamable... sources) {
         this.name = name;
         this.versioningSystem = versioningSystem;
         this.sources = List.of(sources).map(s -> {
             if (s instanceof Replayable) {
                 return s;
             } else {
-                return new BasicSetCacheStreamable<>(s.name(), s, versioningSystem);
+                return new BasicSetCacheStreamable(s.name(), s, versioningSystem);
             }
         });
     }
@@ -54,29 +55,29 @@ public class BasicCartesianStreamable<I extends Comparable<? super I>> implement
     }
 
     @Override
-    public Flux<Event<I>> changes() {
+    public Flux<Event> changes() {
         return Flux.merge(sources.zipWithIndex().map(t -> t._1.changes().map(e -> Tuple.of(t._2, e))))
                 .flatMap(t -> {
                     int source = t._1.intValue();
-                    Event<I> e = t._2;
+                    Event e = t._2;
 
                     if (e.eventType() != Event.EventType.NOOP) {
-                        List<Replayable<I>> rSources = sources.removeAt(source).map(s -> (Replayable<I>) s).insert(source, new SingleRowReplayable<I>(e.row()));
-                        Replayable<I> product = rSources.foldLeft(Option.<Replayable<I>>none(), (s1, s2) -> Option.of(product(s1, s2, e.version()))).get();
+                        List<Replayable> rSources = sources.removeAt(source).map(s -> (Replayable) s).insert(source, new SingleRowReplayable(e.row()));
+                        Replayable product = rSources.foldLeft(Option.<Replayable>none(), (s1, s2) -> Option.of(product(s1, s2, e.version()))).get();
 
                         long x = product.stream(e.version())
-                                .<Event<I>>map(r -> new BasicEvent<>(r, e.eventType(), versioningSystem.newSubVersion(e.version()))).count().block();
+                                .<Event>map(r -> new BasicEvent(r, e.eventType(), versioningSystem.newSubVersion(e.version()))).count().block();
 
                         return product.stream(e.version())
-                                .<Event<I>>map(r -> new BasicEvent<>(r, e.eventType(), versioningSystem.newSubVersion(e.version())))
-                                .concatWith(Flux.<Event<I>>just(new BasicNoopEvent<>(e.version())));
+                                .<Event>map(r -> new BasicEvent(r, e.eventType(), versioningSystem.newSubVersion(e.version())))
+                                .concatWith(Flux.<Event>just(new BasicNoopEvent(e.version())));
                     }
 
                     return Flux.just(e);
                 });
     }
 
-    private Replayable<I> product(Option<Replayable<I>> s1, Replayable<I> s2, I version) {
+    private Replayable product(Option<Replayable> s1, Replayable s2, Version version) {
         if (s1.isEmpty()) {
             return s2;
         }

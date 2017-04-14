@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicVersioningSystem implements VersioningSystem<String> {
+public class BasicVersioningSystem implements VersioningSystem {
 
     private static final char FILLER = '0';
     private static final int PAD_LENGTH = 10;
@@ -35,30 +35,30 @@ public class BasicVersioningSystem implements VersioningSystem<String> {
     }
 
     @Override
-    public String zero() {
-        return pad(0, FILLER);
+    public Version zero() {
+        return new StringVersion(pad(0, FILLER));
     }
 
     @Override
-    public String next() {
-        return pad(counter.incrementAndGet(), FILLER) + "." + pad(9, '9');
+    public Version next() {
+        return new StringVersion(pad(counter.incrementAndGet(), FILLER) + "." + pad(9, '9'));
     }
 
     @Override
-    public String get(long counter) {
-        return pad(counter, FILLER) + "." + pad(9, '9');
+    public Version get(long counter) {
+        return new StringVersion(pad(counter, FILLER) + "." + pad(9, '9'));
     }
 
     @Override
-    public String newSubVersion(String version) {
-        String raw = rawVersion(version);
+    public Version newSubVersion(Version version) {
+        String raw = ((StringVersion) rawVersion(version)).v;
         subCounters.putIfAbsent(raw, new AtomicLong(0));
-        return raw + "." + pad(subCounters.get(raw).incrementAndGet(), FILLER);
+        return new StringVersion(raw + "." + pad(subCounters.get(raw).incrementAndGet(), FILLER));
     }
 
     @Override
-    public String rawVersion(String subVersion) {
-        return subVersion.substring(0, PAD_LENGTH);
+    public Version rawVersion(Version subVersion) {
+        return new StringVersion(((StringVersion) subVersion).v.substring(0, PAD_LENGTH));
     }
 
     private String pad(Object o, char filler) {
@@ -71,4 +71,38 @@ public class BasicVersioningSystem implements VersioningSystem<String> {
         }
         return str;
     }
+
+    private static class StringVersion implements Version {
+        private String v;
+
+        private StringVersion(String v) {
+            this.v = v;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            StringVersion that = (StringVersion) o;
+
+            return v != null ? v.equals(that.v) : that.v == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return v != null ? v.hashCode() : 0;
+        }
+
+        @Override
+        public int compareTo(Version version) {
+            if (!(version instanceof StringVersion)) {
+                throw new IllegalArgumentException("Cannot compare versions");
+            }
+            StringVersion sv = (StringVersion) version;
+            return this.v.compareTo(sv.v);
+        }
+    }
+
 }

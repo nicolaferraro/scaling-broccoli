@@ -19,16 +19,6 @@ package io.broccoli.versioning;
  * @author nicola
  * @since 14/04/2017
  */
-public interface VersioningSystem {
-
-    Version zero();
-
-    Version next();
-
-    Version get(long counter);
-
-    Version newSubVersion(Version version);
-
-    Version rawVersion(Version subVersion);
+public interface Version extends Comparable<Version> {
 
 }

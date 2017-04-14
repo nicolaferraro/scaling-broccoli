@@ -23,6 +23,7 @@ import io.broccoli.stream.Event;
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
 import io.broccoli.stream.Streamable;
+import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.collection.List;
@@ -33,20 +34,20 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicLastStreamable<I extends Comparable<? super I>, U extends Comparable<? super U>> implements Streamable<I>, Replayable<I> {
+public class BasicLastStreamable<U extends Comparable<? super U>> implements Streamable, Replayable {
 
     private String name;
 
-    private Streamable<I> source;
+    private Streamable source;
 
     private Function<? super Row, ? extends Row> groupBy;
     private Function<? super Row, U> orderBy;
 
-    private VersioningSystem<I> versioningSystem;
+    private VersioningSystem versioningSystem;
 
-    private volatile VersionedMap<Row, List<Row>, I> cache;
+    private volatile VersionedMap<Row, List<Row>, Version> cache;
 
-    public BasicLastStreamable(String name, Streamable<I> source, VersioningSystem<I> versioningSystem, Function<? super Row, ? extends Row> groupBy, Function<? super Row, U> orderBy) {
+    public BasicLastStreamable(String name, Streamable source, VersioningSystem versioningSystem, Function<? super Row, ? extends Row> groupBy, Function<? super Row, U> orderBy) {
         this.name = name;
         this.source = source;
         this.versioningSystem = versioningSystem;
@@ -61,13 +62,13 @@ public class BasicLastStreamable<I extends Comparable<? super I>, U extends Comp
     }
 
     @Override
-    public Flux<Row> stream(I version) {
+    public Flux<Row> stream(Version version) {
         return cache.streamValues(version)
                 .flatMapIterable(l -> l.sortBy(orderBy).lastOption());
     }
 
     @Override
-    public Flux<Event<I>> changes() {
+    public Flux<Event> changes() {
         return source.changes().flatMapIterable(e -> {
             if (e.eventType() != Event.EventType.NOOP) {
                 Row groupByKey = groupBy.apply(e.row());
@@ -83,12 +84,12 @@ public class BasicLastStreamable<I extends Comparable<? super I>, U extends Comp
                         Row newBest = completeList.sortBy(orderBy).last();
                         cache.put(groupByKey, completeList, e.version());
                         if (previousBest.equals(newBest)) {
-                            return List.of(new BasicNoopEvent<>(e.version()));
+                            return List.of(new BasicNoopEvent(e.version()));
                         } else {
                             return List.of(
-                                    new BasicEvent<>(previousBest, Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
-                                    new BasicEvent<>(newBest, Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
-                                    new BasicNoopEvent<>(e.version())
+                                    new BasicEvent(previousBest, Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
+                                    new BasicEvent(newBest, Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
+                                    new BasicNoopEvent(e.version())
                             );
                         }
                     }
@@ -98,15 +99,15 @@ public class BasicLastStreamable<I extends Comparable<? super I>, U extends Comp
                     Option<Row> newBest = newCacheEntry.sortBy(orderBy).lastOption();
                     cache.put(groupByKey, newCacheEntry, e.version());
                     if (newBest.isDefined() && previousBest.equals(newBest.get())) {
-                        return List.of(new BasicNoopEvent<>(e.version()));
+                        return List.of(new BasicNoopEvent(e.version()));
                     } else if (newBest.isDefined()) {
                         return List.of(
-                                new BasicEvent<>(previousBest, Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
-                                new BasicEvent<>(newBest.get(), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
-                                new BasicNoopEvent<>(e.version())
+                                new BasicEvent(previousBest, Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
+                                new BasicEvent(newBest.get(), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
+                                new BasicNoopEvent(e.version())
                         );
                     } else {
-                        return List.of(new BasicEvent<>(previousBest, Event.EventType.REMOVE, e.version()));
+                        return List.of(new BasicEvent(previousBest, Event.EventType.REMOVE, e.version()));
                     }
                 }
 

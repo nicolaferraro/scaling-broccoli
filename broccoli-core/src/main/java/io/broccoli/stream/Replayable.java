@@ -15,6 +15,8 @@
  */
 package io.broccoli.stream;
 
+import io.broccoli.versioning.Version;
+
 import reactor.core.publisher.Flux;
 
 /**
@@ -22,8 +24,8 @@ import reactor.core.publisher.Flux;
  * @since 14/04/2017
  */
 @FunctionalInterface
-public interface Replayable<I extends Comparable<? super I>> {
+public interface Replayable {
 
-    Flux<Row> stream(I version);
+    Flux<Row> stream(Version version);
 
 }

@@ -16,7 +16,6 @@
 package io.broccoli.stream;
 
 import javaslang.collection.Traversable;
-import reactor.core.publisher.Flux;
 
 /**
  * @author nicola

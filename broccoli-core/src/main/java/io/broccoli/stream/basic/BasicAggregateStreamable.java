@@ -23,6 +23,7 @@ import io.broccoli.stream.Event;
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
 import io.broccoli.stream.Streamable;
+import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.collection.List;
@@ -34,20 +35,20 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicAggregateStreamable<I extends Comparable<? super I>> implements Streamable<I>, Replayable<I> {
+public class BasicAggregateStreamable implements Streamable, Replayable {
 
     private String name;
 
-    private Streamable<I> source;
+    private Streamable source;
 
     private Function<? super Row, ? extends Row> groupBy;
     private List<AggregateFactory<?>> aggregateFactories;
 
-    private VersioningSystem<I> versioningSystem;
+    private VersioningSystem versioningSystem;
 
-    private volatile VersionedMap<Row, List<Aggregate<?>>, I> cache;
+    private volatile VersionedMap<Row, List<Aggregate<?>>, Version> cache;
 
-    public BasicAggregateStreamable(String name, Streamable<I> source, VersioningSystem<I> versioningSystem, Function<? super Row, ? extends Row> groupBy, AggregateFactory<?>... aggregateFactories) {
+    public BasicAggregateStreamable(String name, Streamable source, VersioningSystem versioningSystem, Function<? super Row, ? extends Row> groupBy, AggregateFactory<?>... aggregateFactories) {
         this.name = name;
         this.source = source;
         this.versioningSystem = versioningSystem;
@@ -62,14 +63,14 @@ public class BasicAggregateStreamable<I extends Comparable<? super I>> implement
     }
 
     @Override
-    public Flux<Row> stream(I version) {
+    public Flux<Row> stream(Version version) {
         return cache.streamEntries(version)
                 .filter(t -> t._2.exists(a -> a.supportingRows() > 0))
                 .map(t -> append(t._1, t._2));
     }
 
     @Override
-    public Flux<Event<I>> changes() {
+    public Flux<Event> changes() {
         return source.changes().flatMapIterable(e -> {
             if (e.eventType() != Event.EventType.NOOP) {
                 Row groupByKey = groupBy.apply(e.row());
@@ -79,7 +80,7 @@ public class BasicAggregateStreamable<I extends Comparable<? super I>> implement
                     if (previous.isEmpty() || previous.get().isEmpty()) {
                         List<Aggregate<?>> aggregates = aggregateFactories.map(AggregateFactory::newAggregate).map(a -> a.add(e.row()));
                         cache.put(groupByKey, aggregates, e.version());
-                        return List.of(new BasicEvent<>(append(groupByKey, aggregates), Event.EventType.ADD, e.version()));
+                        return List.of(new BasicEvent(append(groupByKey, aggregates), Event.EventType.ADD, e.version()));
                     } else {
                         List<Aggregate<?>> previousAggregates = previous.get();
                         List<Aggregate<?>> newAggregates = previousAggregates.map(a -> a.add(e.row()));
@@ -87,12 +88,12 @@ public class BasicAggregateStreamable<I extends Comparable<? super I>> implement
                         cache.put(groupByKey, newAggregates, e.version());
 
                         if (previousAggregates.equals(newAggregates)) {
-                            return List.of(new BasicNoopEvent<>(e.version()));
+                            return List.of(new BasicNoopEvent(e.version()));
                         } else {
                             return List.of(
-                                    new BasicEvent<>(append(groupByKey, previousAggregates), Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
-                                    new BasicEvent<>(append(groupByKey, newAggregates), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
-                                    new BasicNoopEvent<>(e.version())
+                                    new BasicEvent(append(groupByKey, previousAggregates), Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
+                                    new BasicEvent(append(groupByKey, newAggregates), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
+                                    new BasicNoopEvent(e.version())
                             );
                         }
                     }
@@ -102,12 +103,12 @@ public class BasicAggregateStreamable<I extends Comparable<? super I>> implement
                     cache.put(groupByKey, newAggregates, e.version());
 
                     if (previousAggregates.equals(newAggregates)) {
-                        return List.of(new BasicNoopEvent<>(e.version()));
+                        return List.of(new BasicNoopEvent(e.version()));
                     } else {
                         return List.of(
-                                new BasicEvent<>(append(groupByKey, previousAggregates), Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
-                                new BasicEvent<>(append(groupByKey, newAggregates), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
-                                new BasicNoopEvent<>(e.version())
+                                new BasicEvent(append(groupByKey, previousAggregates), Event.EventType.REMOVE, versioningSystem.newSubVersion(e.version())),
+                                new BasicEvent(append(groupByKey, newAggregates), Event.EventType.ADD, versioningSystem.newSubVersion(e.version())),
+                                new BasicNoopEvent(e.version())
                         );
                     }
                 }

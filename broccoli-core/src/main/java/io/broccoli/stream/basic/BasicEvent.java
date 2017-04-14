@@ -17,18 +17,19 @@ package io.broccoli.stream.basic;
 
 import io.broccoli.stream.Event;
 import io.broccoli.stream.Row;
+import io.broccoli.versioning.Version;
 
 /**
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicEvent<I extends Comparable<? super I>> implements Event<I> {
+public class BasicEvent implements Event {
 
     private Row row;
     private EventType eventType;
-    private I version;
+    private Version version;
 
-    public BasicEvent(Row row, EventType eventType, I version) {
+    public BasicEvent(Row row, EventType eventType, Version version) {
         this.row = row;
         this.eventType = eventType;
         this.version = version;
@@ -45,7 +46,7 @@ public class BasicEvent<I extends Comparable<? super I>> implements Event<I> {
     }
 
     @Override
-    public I version() {
+    public Version version() {
         return version;
     }
 

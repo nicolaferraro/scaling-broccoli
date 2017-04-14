@@ -15,17 +15,19 @@
  */
 package io.broccoli.stream;
 
+import io.broccoli.versioning.Version;
+
 /**
  * @author nicola
  * @since 14/04/2017
  */
-public interface Event<I extends Comparable<? super I>> {
+public interface Event {
 
     Row row();
 
     EventType eventType();
 
-    I version();
+    Version version();
 
     enum EventType {
         ADD, REMOVE, NOOP

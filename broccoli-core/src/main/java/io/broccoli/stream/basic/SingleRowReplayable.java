@@ -17,6 +17,7 @@ package io.broccoli.stream.basic;
 
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
+import io.broccoli.versioning.Version;
 
 import reactor.core.publisher.Flux;
 
@@ -24,7 +25,7 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class SingleRowReplayable<I extends Comparable<? super I>> implements Replayable<I> {
+public class SingleRowReplayable implements Replayable {
 
     private Row row;
 
@@ -33,7 +34,7 @@ public class SingleRowReplayable<I extends Comparable<? super I>> implements Rep
     }
 
     @Override
-    public Flux<Row> stream(I version) {
+    public Flux<Row> stream(Version version) {
         return Flux.just(row);
     }
 

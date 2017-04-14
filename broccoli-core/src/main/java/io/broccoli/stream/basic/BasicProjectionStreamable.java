@@ -21,6 +21,7 @@ import io.broccoli.stream.Event;
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
 import io.broccoli.stream.Streamable;
+import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.collection.List;
@@ -30,17 +31,17 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicProjectionStreamable<I extends Comparable<? super I>> implements Streamable<I>, Replayable<I> {
+public class BasicProjectionStreamable implements Streamable, Replayable {
 
     private String name;
 
-    private Streamable<I> source;
+    private Streamable source;
 
     private List<String> columns;
 
-    private volatile VersionedMap<Row, Long, I> cache;
+    private volatile VersionedMap<Row, Long, Version> cache;
 
-    public BasicProjectionStreamable(String name, Streamable<I> source, VersioningSystem<I> versioningSystem, String... columns) {
+    public BasicProjectionStreamable(String name, Streamable source, VersioningSystem versioningSystem, String... columns) {
         this.name = name;
         this.source = source;
         this.columns = List.of(columns);
@@ -53,12 +54,12 @@ public class BasicProjectionStreamable<I extends Comparable<? super I>> implemen
     }
 
     @Override
-    public Flux<Row> stream(I version) {
+    public Flux<Row> stream(Version version) {
         return null;
     }
 
     @Override
-    public Flux<Event<I>> changes() {
+    public Flux<Event> changes() {
         return source.changes()
                 .map(e -> {
                     switch (e.eventType()) {
@@ -74,11 +75,11 @@ public class BasicProjectionStreamable<I extends Comparable<? super I>> implemen
                         }
                         cache.put(key, newCount, e.version());
                         if (count == 0 && newCount > count) {
-                            return new BasicEvent<>(key, Event.EventType.ADD, e.version());
+                            return new BasicEvent(key, Event.EventType.ADD, e.version());
                         } else if (count > 0 && newCount == 0) {
-                            return new BasicEvent<>(key, Event.EventType.REMOVE, e.version());
+                            return new BasicEvent(key, Event.EventType.REMOVE, e.version());
                         } else {
-                            return new BasicNoopEvent<>(e.version());
+                            return new BasicNoopEvent(e.version());
                         }
                     default:
                         throw new IllegalArgumentException("Unknown event type " + e);

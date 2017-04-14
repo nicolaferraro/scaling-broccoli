@@ -15,9 +15,6 @@
  */
 package io.broccoli.stream.basic;
 
-import io.broccoli.stream.Cell;
-import io.broccoli.stream.Row;
-
 /**
  * @author nicola
  * @since 14/04/2017

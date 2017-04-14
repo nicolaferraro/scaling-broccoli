@@ -13,22 +13,11 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package io.broccoli.versioning;
+package io.broccoli.stream;
 
 /**
  * @author nicola
  * @since 14/04/2017
  */
-public interface VersioningSystem {
-
-    Version zero();
-
-    Version next();
-
-    Version get(long counter);
-
-    Version newSubVersion(Version version);
-
-    Version rawVersion(Version subVersion);
-
+public interface Table extends Replayable, Streamable {
 }

@@ -21,6 +21,7 @@ import io.broccoli.stream.Event;
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
 import io.broccoli.stream.Streamable;
+import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.control.Option;
@@ -30,15 +31,15 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicSetCacheStreamable<I extends Comparable<? super I>> implements Streamable<I>, Replayable<I> {
+public class BasicSetCacheStreamable implements Streamable, Replayable {
 
     private String name;
 
-    private Streamable<I> source;
+    private Streamable source;
 
-    private volatile VersionedMap<Row, Row, I> cache;
+    private volatile VersionedMap<Row, Row, Version> cache;
 
-    public BasicSetCacheStreamable(String name, Streamable<I> source, VersioningSystem<I> versioningSystem) {
+    public BasicSetCacheStreamable(String name, Streamable source, VersioningSystem versioningSystem) {
         this.name = name;
         this.source = source;
         this.cache = new SimpleVersionedMap<>(versioningSystem.zero());
@@ -50,12 +51,12 @@ public class BasicSetCacheStreamable<I extends Comparable<? super I>> implements
     }
 
     @Override
-    public Flux<Row> stream(I version) {
+    public Flux<Row> stream(Version version) {
         return cache.streamValues(version);
     }
 
     @Override
-    public Flux<Event<I>> changes() {
+    public Flux<Event> changes() {
         return source.changes()
                 .map(e -> {
                     if (e.eventType() != Event.EventType.NOOP) {
@@ -64,13 +65,13 @@ public class BasicSetCacheStreamable<I extends Comparable<? super I>> implements
                             if (existing.isEmpty()) {
                                 cache.put(e.row(), e.row(), e.version());
                             } else {
-                                return new BasicNoopEvent<>(e.version());
+                                return new BasicNoopEvent(e.version());
                             }
                         } else if (e.eventType() == Event.EventType.REMOVE) {
                             if (existing.isDefined()) {
                                 cache.delete(e.row(), e.version());
                             } else {
-                                return new BasicNoopEvent<>(e.version());
+                                return new BasicNoopEvent(e.version());
                             }
                         }
                     }

@@ -27,15 +27,15 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicFilterStreamable<I extends Comparable<? super I>> implements Streamable<I> {
+public class BasicFilterStreamable implements Streamable {
 
     private String name;
 
     private Predicate<Row> filter;
 
-    private Streamable<I> source;
+    private Streamable source;
 
-    public BasicFilterStreamable(String name, Predicate<Row> filter, Streamable<I> source) {
+    public BasicFilterStreamable(String name, Predicate<Row> filter, Streamable source) {
         this.name = name;
         this.filter = filter;
         this.source = source;
@@ -47,13 +47,13 @@ public class BasicFilterStreamable<I extends Comparable<? super I>> implements S
     }
 
     @Override
-    public Flux<Event<I>> changes() {
+    public Flux<Event> changes() {
         return source.changes()
                 .map(e -> {
                     if (filter.test(e.row())) {
                         return e;
                     } else {
-                        return new BasicNoopEvent<>(e.version());
+                        return new BasicNoopEvent(e.version());
                     }
                 });
     }

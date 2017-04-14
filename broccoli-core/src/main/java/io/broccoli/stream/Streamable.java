@@ -21,10 +21,10 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public interface Streamable<I extends Comparable<? super I>> {
+public interface Streamable {
 
     String name();
 
-    Flux<Event<I>> changes();
+    Flux<Event> changes();
 
 }
