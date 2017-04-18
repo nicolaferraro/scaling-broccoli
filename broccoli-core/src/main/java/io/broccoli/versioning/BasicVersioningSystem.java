@@ -45,6 +45,11 @@ public class BasicVersioningSystem implements VersioningSystem {
     }
 
     @Override
+    public Version current() {
+        return new StringVersion(pad(counter.get(), FILLER) + "." + pad(9, '9'));
+    }
+
+    @Override
     public Version get(long counter) {
         return new StringVersion(pad(counter, FILLER) + "." + pad(9, '9'));
     }

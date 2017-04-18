@@ -15,22 +15,16 @@
  */
 package io.broccoli.stream;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import io.broccoli.stream.basic.BasicDatabase;
-import io.broccoli.util.TestStreamFactory;
+import io.broccoli.util.StreamUtils;
+import io.broccoli.util.TestDatabaseFactory;
 import io.broccoli.versioning.BasicVersioningSystem;
-import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import javaslang.control.Option;
-import reactor.core.publisher.Flux;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author nicola
@@ -45,39 +39,87 @@ public class DatabaseTest {
         v = new BasicVersioningSystem();
     }
 
+
     @Test
-    public void testDB() throws InterruptedException {
+    public void testDBProjection() throws InterruptedException {
 
-        Flux<Event> source1 = Flux.just(
-                TestStreamFactory.add(v.next(), "1"),
-                TestStreamFactory.add(v.next(), "2"),
-                TestStreamFactory.remove(v.next(), "2")
-        );
-
-        Flux<Event> source2 = Flux.just(
-                TestStreamFactory.add(v.next(), Option.of("r"), "A"),
-                TestStreamFactory.add(v.next(), Option.of("r"), "B"),
-                TestStreamFactory.add(v.next(), Option.of("r"), "C")
-        );
+        Table s = TestDatabaseFactory.stream()
+                .versioningSysten(v)
+                .name("s")
+                .columns("s1", "s2")
+                .withRow("a", 1)
+                .withRow("a", 2)
+                .buildTable();
 
         Database db = new BasicDatabase.Builder(v)
-                .sourceTable("source1", source1)
-                .sourceTable("source2", source2)
+                .sourceTable(s)
                 .build();
 
         db.start();
+        db.currentVersion().last().block(Duration.ofSeconds(5)); // wait for db full
 
-        Version[] versions = new Version[1];
-        CountDownLatch latch = new CountDownLatch(1);
-        db.currentVersion()
-                .doOnNext(version -> versions[0] = version)
-                .doOnComplete(latch::countDown)
-                .subscribe();
+        Table result = db.newQueryBuilder()
+                .select("s1")
+                .from("s")
+                .buildQuery(v.current());
+        result.changes().last().block(Duration.ofSeconds(5)); // wait for stream completion
 
-        assertEquals(2, db.tables().size());
+        Table expected = TestDatabaseFactory.stream()
+                .versioningSysten(v)
+                .name("result")
+                .columns("s1")
+                .withRow("a")
+                .buildTableImmediately();
 
-        latch.await(5, TimeUnit.SECONDS);
-        assertEquals(v.get(6), versions[0]);
+        StreamUtils.assertEquals(expected, result, v.current());
+    }
+
+    @Test
+    public void testDBCartesian() throws InterruptedException {
+
+        Table s = TestDatabaseFactory.stream()
+                .versioningSysten(v)
+                .name("s")
+                .columns("s1", "s2")
+                .withRow("a", 1)
+                .withRow("a", 2)
+                .buildTable();
+
+        Table r = TestDatabaseFactory.stream()
+                .versioningSysten(v)
+                .name("r")
+                .columns("r1")
+                .withRow("x")
+                .withRow("z")
+                .buildTable();
+
+        Database db = new BasicDatabase.Builder(v)
+                .sourceTable(s)
+                .sourceTable(r)
+                .build();
+
+        db.start();
+        db.currentVersion().last().block(Duration.ofSeconds(5)); // wait for db full
+
+
+        Table result = db.newQueryBuilder()
+                .select("s2", "r1")
+                .from("s", "r")
+                .buildQuery(v.current());
+        result.changes().last().block(Duration.ofSeconds(5)); // wait for stream completion
+
+
+        Table expected = TestDatabaseFactory.stream()
+                .versioningSysten(v)
+                .name("result")
+                .columns("s2", "r1")
+                .withRow(1, "x")
+                .withRow(1, "z")
+                .withRow(2, "x")
+                .withRow(2, "z")
+                .buildTableImmediately();
+
+        StreamUtils.assertEquals(expected, result, v.current());
     }
 
 }

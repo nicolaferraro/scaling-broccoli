@@ -28,7 +28,7 @@ public interface Aggregate<T> {
 
     Aggregate<T> remove(Row row);
 
-    Cell<T> get();
+    Cell get();
 
     long supportingRows();
 

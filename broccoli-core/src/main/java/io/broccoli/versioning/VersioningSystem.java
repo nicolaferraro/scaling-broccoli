@@ -23,6 +23,8 @@ public interface VersioningSystem {
 
     Version zero();
 
+    Version current();
+
     Version next();
 
     Version get(long counter);

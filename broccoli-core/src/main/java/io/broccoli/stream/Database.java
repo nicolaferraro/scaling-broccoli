@@ -16,8 +16,10 @@
 package io.broccoli.stream;
 
 import io.broccoli.versioning.Version;
+import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.collection.Traversable;
+import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 
 /**
@@ -28,6 +30,12 @@ public interface Database {
 
     Traversable<Table> tables();
 
+    Option<Table> table(String name);
+
+    VersioningSystem versioningSystem();
+
+    Replayable.Builder newQueryBuilder();
+
     void start();
 
     Flux<Version> currentVersion();
@@ -35,6 +43,8 @@ public interface Database {
     interface Builder {
 
         Builder sourceTable(String name, Flux<Event> stream);
+
+        Builder sourceTable(Table table);
 
         Database build();
 

@@ -19,12 +19,12 @@ package io.broccoli.stream;
  * @author nicola
  * @since 14/04/2017
  */
-public interface Cell<T> {
+public interface Cell {
 
     String name();
 
-    Class<T> type();
+    Class<?> type();
 
-    T value();
+    Object value();
 
 }

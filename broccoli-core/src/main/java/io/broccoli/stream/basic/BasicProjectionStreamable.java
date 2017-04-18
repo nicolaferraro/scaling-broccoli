@@ -21,6 +21,7 @@ import io.broccoli.stream.Event;
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Row;
 import io.broccoli.stream.Streamable;
+import io.broccoli.stream.Table;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
@@ -31,7 +32,7 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicProjectionStreamable implements Streamable, Replayable {
+public class BasicProjectionStreamable implements Streamable, Replayable, Table {
 
     private String name;
 
@@ -55,7 +56,9 @@ public class BasicProjectionStreamable implements Streamable, Replayable {
 
     @Override
     public Flux<Row> stream(Version version) {
-        return null;
+        return cache.streamEntries(version)
+                .filter(t -> t._2.longValue() > 0)
+                .map(t -> t._1);
     }
 
     @Override

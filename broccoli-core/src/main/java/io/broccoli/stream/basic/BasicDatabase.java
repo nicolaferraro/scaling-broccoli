@@ -15,10 +15,9 @@
  */
 package io.broccoli.stream.basic;
 
-import java.util.function.Function;
-
 import io.broccoli.stream.Database;
 import io.broccoli.stream.Event;
+import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Streamable;
 import io.broccoli.stream.Table;
 import io.broccoli.versioning.Version;
@@ -29,6 +28,7 @@ import javaslang.collection.List;
 import javaslang.collection.Map;
 import javaslang.collection.Seq;
 import javaslang.collection.Traversable;
+import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.ReplayProcessor;
 
@@ -56,6 +56,22 @@ public class BasicDatabase implements Database {
     @Override
     public Traversable<Table> tables() {
         return this.tables;
+    }
+
+
+    @Override
+    public Option<Table> table(String name) {
+        return tables().filter(t -> name.equals(t.name())).headOption();
+    }
+
+    @Override
+    public VersioningSystem versioningSystem() {
+        return v;
+    }
+
+    @Override
+    public Replayable.Builder newQueryBuilder() {
+        return new BasicQueryBuilder(this);
     }
 
     @Override
@@ -105,6 +121,14 @@ public class BasicDatabase implements Database {
                 throw new IllegalArgumentException("Name already present: " + name);
             }
             return new Builder(v, tables.put(name, new BasicSetCacheStreamable(name, new BasicFluxStreamable("source-of-" + name, stream), v)));
+        }
+
+        @Override
+        public Database.Builder sourceTable(Table table) {
+            if (tables.keySet().contains(table.name())) {
+                throw new IllegalArgumentException("Name already present: " + table.name());
+            }
+            return new Builder(v, tables.put(table.name(), table));
         }
 
         @Override

@@ -25,10 +25,10 @@ public interface Row {
 
     int size();
 
-    Traversable<Cell<?>> cells();
+    Traversable<Cell> cells();
 
-    Cell<?> cell(int pos);
+    Cell cell(int pos);
 
-    Cell<?> cell(String name);
+    Cell cell(String name);
 
 }

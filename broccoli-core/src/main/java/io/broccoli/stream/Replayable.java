@@ -28,4 +28,26 @@ public interface Replayable {
 
     Flux<Row> stream(Version version);
 
+    interface Builder {
+        FromClauseBuilder select(String... columns);
+    }
+
+    interface FromClauseBuilder {
+
+        WhereClauseBuilder from(String... tables);
+
+    }
+
+    interface WhereClauseBuilder extends QueryFinalizerBuilder {
+    }
+
+    interface QueryFinalizerBuilder {
+
+        Table buildStructure();
+
+        Table buildQuery(Version version);
+
+
+    }
+
 }

@@ -48,8 +48,8 @@ public class BasicCountAggregate implements Aggregate<Long> {
     }
 
     @Override
-    public Cell<Long> get() {
-        return new BasicCell<>(name, Long.class, count);
+    public Cell get() {
+        return new BasicCell(name, Long.class, count);
     }
 
     @Override

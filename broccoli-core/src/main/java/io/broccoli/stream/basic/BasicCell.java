@@ -21,15 +21,15 @@ import io.broccoli.stream.Cell;
  * @author nicola
  * @since 14/04/2017
  */
-public class BasicCell<T> implements Cell<T> {
+public class BasicCell implements Cell {
 
     private String name;
 
-    private Class<T> type;
+    private Class<?> type;
 
-    private T value;
+    private Object value;
 
-    public BasicCell(String name, Class<T> type, T value) {
+    public BasicCell(String name, Class<?> type, Object value) {
         this.name = name;
         this.type = type;
         this.value = value;
@@ -41,12 +41,12 @@ public class BasicCell<T> implements Cell<T> {
     }
 
     @Override
-    public Class<T> type() {
+    public Class<?> type() {
         return type;
     }
 
     @Override
-    public T value() {
+    public Object value() {
         return value;
     }
 
@@ -55,7 +55,7 @@ public class BasicCell<T> implements Cell<T> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        BasicCell<?> basicCell = (BasicCell<?>) o;
+        BasicCell basicCell = (BasicCell) o;
 
         if (name != null ? !name.equals(basicCell.name) : basicCell.name != null) return false;
         if (type != null ? !type.equals(basicCell.type) : basicCell.type != null) return false;
@@ -69,5 +69,16 @@ public class BasicCell<T> implements Cell<T> {
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (value != null ? value.hashCode() : 0);
         return result;
+    }
+
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("BasicCell{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", type=").append(type);
+        sb.append(", value=").append(value);
+        sb.append('}');
+        return sb.toString();
     }
 }

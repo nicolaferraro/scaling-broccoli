@@ -27,9 +27,9 @@ import javaslang.collection.Traversable;
  */
 public class BasicRow implements Row {
 
-    private List<Cell<?>> cells;
+    private List<Cell> cells;
 
-    public BasicRow(List<Cell<?>> cells) {
+    public BasicRow(List<Cell> cells) {
         this.cells = cells;
     }
 
@@ -39,17 +39,17 @@ public class BasicRow implements Row {
     }
 
     @Override
-    public Traversable<Cell<?>> cells() {
+    public Traversable<Cell> cells() {
         return cells;
     }
 
     @Override
-    public Cell<?> cell(int pos) {
+    public Cell cell(int pos) {
         return cells.get(pos);
     }
 
     @Override
-    public Cell<?> cell(String name) {
+    public Cell cell(String name) {
         return cell(cells.indexWhere(c -> name.equals(c.name())));
     }
 
@@ -67,5 +67,14 @@ public class BasicRow implements Row {
     @Override
     public int hashCode() {
         return cells != null ? cells.hashCode() : 0;
+    }
+
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("BasicRow{");
+        sb.append("cells=").append(cells);
+        sb.append('}');
+        return sb.toString();
     }
 }
