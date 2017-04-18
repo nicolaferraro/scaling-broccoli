@@ -17,6 +17,7 @@ package io.broccoli.stream.basic;
 
 import io.broccoli.stream.Database;
 import io.broccoli.stream.Event;
+import io.broccoli.stream.Query;
 import io.broccoli.stream.Replayable;
 import io.broccoli.stream.Streamable;
 import io.broccoli.stream.Table;
@@ -70,7 +71,7 @@ public class BasicDatabase implements Database {
     }
 
     @Override
-    public Replayable.Builder newQueryBuilder() {
+    public Query.Builder newQueryBuilder() {
         return new BasicQueryBuilder(this);
     }
 

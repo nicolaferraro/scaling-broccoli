@@ -17,15 +17,32 @@ package io.broccoli.stream;
 
 import io.broccoli.versioning.Version;
 
-import reactor.core.publisher.Flux;
-
 /**
  * @author nicola
- * @since 14/04/2017
+ * @since 18/04/2017
  */
-@FunctionalInterface
-public interface Replayable {
+public interface Query {
 
-    Flux<Row> stream(Version version);
+    interface Builder {
+        FromClauseBuilder select(String... columns);
+    }
+
+    interface FromClauseBuilder {
+
+        WhereClauseBuilder from(String... tables);
+
+    }
+
+    interface WhereClauseBuilder extends QueryFinalizerBuilder {
+
+    }
+
+    interface QueryFinalizerBuilder {
+
+        Table buildStructure();
+
+        Table buildQuery(Version version);
+
+    }
 
 }

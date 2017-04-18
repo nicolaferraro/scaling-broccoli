@@ -16,7 +16,7 @@
 package io.broccoli.stream.basic;
 
 import io.broccoli.stream.Database;
-import io.broccoli.stream.Replayable;
+import io.broccoli.stream.Query;
 import io.broccoli.stream.Streamable;
 import io.broccoli.stream.Table;
 import io.broccoli.versioning.Version;
@@ -27,7 +27,7 @@ import javaslang.collection.List;
  * @author nicola
  * @since 18/04/2017
  */
-public class BasicQueryBuilder implements Replayable.Builder {
+public class BasicQueryBuilder implements Query.Builder {
 
     private Database database;
     private List<String> tables;
@@ -43,7 +43,7 @@ public class BasicQueryBuilder implements Replayable.Builder {
         return new BasicFromClauseBuilder();
     }
 
-    class BasicFromClauseBuilder implements Replayable.FromClauseBuilder {
+    class BasicFromClauseBuilder implements Query.FromClauseBuilder {
         @Override
         public BasicWhereClauseBuilder from(String... tables) {
             BasicQueryBuilder.this.tables = List.of(tables);
@@ -51,11 +51,11 @@ public class BasicQueryBuilder implements Replayable.Builder {
         }
     }
 
-    class BasicWhereClauseBuilder extends BasicQueryFinalizerBuilder implements Replayable.WhereClauseBuilder {
+    class BasicWhereClauseBuilder extends BasicQueryFinalizerBuilder implements Query.WhereClauseBuilder {
 
     }
 
-    class BasicQueryFinalizerBuilder implements Replayable.QueryFinalizerBuilder {
+    class BasicQueryFinalizerBuilder implements Query.QueryFinalizerBuilder {
         @Override
         public Table buildStructure() {
 

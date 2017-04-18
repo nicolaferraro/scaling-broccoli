@@ -34,7 +34,7 @@ public interface Database {
 
     VersioningSystem versioningSystem();
 
-    Replayable.Builder newQueryBuilder();
+    Query.Builder newQueryBuilder();
 
     void start();
 
