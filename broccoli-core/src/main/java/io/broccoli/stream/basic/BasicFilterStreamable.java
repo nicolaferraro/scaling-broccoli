@@ -46,6 +46,12 @@ public class BasicFilterStreamable implements Streamable {
         return name;
     }
 
+
+    @Override
+    public boolean monotonic() {
+        return true;
+    }
+
     @Override
     public Flux<Event> changes() {
         return source.changes()

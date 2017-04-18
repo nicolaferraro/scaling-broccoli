@@ -70,6 +70,11 @@ public class BasicAggregateStreamable implements Streamable, Replayable {
     }
 
     @Override
+    public boolean monotonic() {
+        return false;
+    }
+
+    @Override
     public Flux<Event> changes() {
         return source.changes().flatMapIterable(e -> {
             if (e.eventType() != Event.EventType.NOOP) {

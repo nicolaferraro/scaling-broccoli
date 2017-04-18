@@ -47,6 +47,11 @@ public class BasicReplayableReplayer implements Streamable {
     }
 
     @Override
+    public boolean monotonic() {
+        return true;
+    }
+
+    @Override
     public Flux<Event> changes() {
         return replayable.stream(version).map(r -> new BasicEvent(r, Event.EventType.ADD, v.newSubVersion(version)));
     }

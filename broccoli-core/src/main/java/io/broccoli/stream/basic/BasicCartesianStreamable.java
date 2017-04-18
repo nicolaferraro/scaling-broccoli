@@ -55,6 +55,11 @@ public class BasicCartesianStreamable implements Streamable {
     }
 
     @Override
+    public boolean monotonic() {
+        return true;
+    }
+
+    @Override
     public Flux<Event> changes() {
         return Flux.merge(sources.zipWithIndex().map(t -> t._1.changes().map(e -> Tuple.of(t._2, e))))
                 .flatMap(t -> {
@@ -64,9 +69,6 @@ public class BasicCartesianStreamable implements Streamable {
                     if (e.eventType() != Event.EventType.NOOP) {
                         List<Replayable> rSources = sources.removeAt(source).map(s -> (Replayable) s).insert(source, new SingleRowReplayable(e.row()));
                         Replayable product = rSources.foldLeft(Option.<Replayable>none(), (s1, s2) -> Option.of(product(s1, s2, e.version()))).get();
-
-                        long x = product.stream(e.version())
-                                .<Event>map(r -> new BasicEvent(r, e.eventType(), versioningSystem.newSubVersion(e.version()))).count().block();
 
                         return product.stream(e.version())
                                 .<Event>map(r -> new BasicEvent(r, e.eventType(), versioningSystem.newSubVersion(e.version())))

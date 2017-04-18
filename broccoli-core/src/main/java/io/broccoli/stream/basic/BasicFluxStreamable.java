@@ -41,6 +41,11 @@ public class BasicFluxStreamable implements Streamable {
     }
 
     @Override
+    public boolean monotonic() {
+        return true;
+    }
+
+    @Override
     public Flux<Event> changes() {
         return flux.cache(0); // always hot
     }

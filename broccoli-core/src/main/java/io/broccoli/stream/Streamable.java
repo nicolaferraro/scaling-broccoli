@@ -27,4 +27,6 @@ public interface Streamable {
 
     Flux<Event> changes();
 
+    boolean monotonic();
+
 }

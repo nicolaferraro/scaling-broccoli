@@ -57,6 +57,11 @@ public class BasicSetCacheStreamable implements Streamable, Replayable, Table {
     }
 
     @Override
+    public boolean monotonic() {
+        return true;
+    }
+
+    @Override
     public Flux<Event> changes() {
         return source.changes()
                 .map(e -> {
