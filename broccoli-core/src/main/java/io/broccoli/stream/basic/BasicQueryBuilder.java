@@ -43,7 +43,7 @@ public class BasicQueryBuilder implements Query.Builder {
         return new BasicFromClauseBuilder();
     }
 
-    class BasicFromClauseBuilder implements Query.FromClauseBuilder {
+    public class BasicFromClauseBuilder implements Query.FromClauseBuilder {
         @Override
         public BasicWhereClauseBuilder from(String... tables) {
             BasicQueryBuilder.this.tables = List.of(tables);
@@ -51,11 +51,11 @@ public class BasicQueryBuilder implements Query.Builder {
         }
     }
 
-    class BasicWhereClauseBuilder extends BasicQueryFinalizerBuilder implements Query.WhereClauseBuilder {
+    public class BasicWhereClauseBuilder extends BasicQueryFinalizerBuilder implements Query.WhereClauseBuilder {
 
     }
 
-    class BasicQueryFinalizerBuilder implements Query.QueryFinalizerBuilder {
+    public class BasicQueryFinalizerBuilder implements Query.QueryFinalizerBuilder {
         @Override
         public Table buildStructure() {
 
