@@ -15,44 +15,57 @@
  */
 package io.broccoli.sql;
 
+import java.io.IOException;
+import java.io.InputStream;
+
+import io.broccoli.sql.ast.DatabaseAST;
 import io.broccoli.stream.Database;
-import io.broccoli.stream.Table;
-import io.broccoli.versioning.Version;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+
+import javaslang.collection.List;
 
 /**
  * @author nicola
- * @since 19/04/2017
+ * @since 09/05/2017
  */
-public class BroccoliQueryParser {
+public class BroccoliDatabaseBuilder {
 
-    private Database database;
-
-    private Version version;
-
-    public BroccoliQueryParser(Database database, Version version) {
-        this.database = database;
-        this.version = version;
+    public BroccoliDatabaseBuilder() {
     }
 
-    public Table parseQuery(String query) {
-        CharStream stream = CharStreams.fromString(query);
+    public DatabaseAST build(InputStream is) throws IOException {
+        return build(CharStreams.fromStream(is));
+    }
+
+    public DatabaseAST build(String content) {
+        return build(CharStreams.fromString(content));
+    }
+
+    public DatabaseAST build(CharStream stream) {
         BroccoliLexer lexer = new BroccoliLexer(stream);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         BroccoliParser parser = new BroccoliParser(tokenStream);
         parser.setErrorHandler(new BailErrorStrategy());
-        BroccoliParser.SelectStatementContext tree = parser.selectStatement();
+        BroccoliParser.SqlFileContext tree = parser.sqlFile();
 
         ParseTreeWalker walker = new ParseTreeWalker();
-        BroccoliSqlListener listener = new BroccoliSqlListener(database, version);
+        BroccoliDatabaseListener listener = new BroccoliDatabaseListener();
         walker.walk(listener, tree);
 
-        return listener.build();
+        DatabaseAST database = listener.build();
+
+        BroccoliASTValidator validator = new BroccoliASTValidator();
+        List<String> errors = validator.validate(database);
+        if (errors.nonEmpty()) {
+            throw new RuntimeException("Error while building the database.\n" + errors.mkString("\n"));
+        }
+        return database;
     }
 
 }

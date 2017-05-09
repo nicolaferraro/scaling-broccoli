@@ -42,12 +42,12 @@ public class BroccoliSqlListener extends BroccoliBaseListener {
     }
 
     @Override
-    public void exitResult_column(BroccoliParser.Result_columnContext ctx) {
+    public void exitResultColumn(BroccoliParser.ResultColumnContext ctx) {
         columns = columns.append(ctx.getText());
     }
 
     @Override
-    public void exitTable_with_optional_alias(BroccoliParser.Table_with_optional_aliasContext ctx) {
+    public void exitTableWithOptionalAlias(BroccoliParser.TableWithOptionalAliasContext ctx) {
         tables = tables.append(ctx.getText());
     }
 
