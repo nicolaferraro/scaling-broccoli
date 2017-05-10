@@ -19,13 +19,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import io.broccoli.sql.ast.DatabaseAST;
-import io.broccoli.stream.Database;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import javaslang.collection.List;
@@ -60,7 +58,7 @@ public class BroccoliDatabaseBuilder {
 
         DatabaseAST database = listener.build();
 
-        BroccoliASTValidator validator = new BroccoliASTValidator();
+        BroccoliDatabaseASTValidator validator = new BroccoliDatabaseASTValidator();
         List<String> errors = validator.validate(database);
         if (errors.nonEmpty()) {
             throw new RuntimeException("Error while building the database.\n" + errors.mkString("\n"));

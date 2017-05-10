@@ -5,13 +5,11 @@ import lombok.Data;
 
 /**
  * @author nicola
- * @since 09/05/2017
+ * @since 10/05/2017
  */
 @Data
-public class DatabaseAST {
+public class SelectStatementAST {
 
-    private List<TableAST> tables;
-
-    private List<ViewAST> views;
+    List<ResultColumnAST> resultColumns;
 
 }

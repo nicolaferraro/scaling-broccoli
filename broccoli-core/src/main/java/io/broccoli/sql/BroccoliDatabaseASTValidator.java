@@ -9,11 +9,11 @@ import javaslang.collection.List;
  * @author nicola
  * @since 10/05/2017
  */
-public class BroccoliASTValidator {
+public class BroccoliDatabaseASTValidator {
 
     private List<Constraint> constraints;
 
-    public BroccoliASTValidator() {
+    public BroccoliDatabaseASTValidator() {
 
         constraints = List.of(
                 d -> {

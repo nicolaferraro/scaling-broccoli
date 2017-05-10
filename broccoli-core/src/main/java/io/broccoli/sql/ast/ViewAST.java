@@ -8,10 +8,10 @@ import lombok.Data;
  * @since 09/05/2017
  */
 @Data
-public class DatabaseAST {
+public class ViewAST {
 
-    private List<TableAST> tables;
+    private String name;
 
-    private List<ViewAST> views;
+    private SelectStatementAST query;
 
 }

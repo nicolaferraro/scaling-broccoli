@@ -16,7 +16,7 @@ sqlStatementList
  ;
 
 sqlStatement
- : (createTableStatement)
+ : (createTableStatement | createViewStatement)
  ;
 
 createTableStatement
@@ -31,10 +31,15 @@ columnDefinition
  : columnName type
  ;
 
-selectStatement
- : selectCore
+createViewStatement
+ : K_CREATE (K_MATERIALIZED)? K_VIEW viewName K_AS OPEN_PAR selectStatement CLOSE_PAR
  ;
 
+selectStatement
+ : K_SELECT resultColumn ( ',' resultColumn )*
+   ( K_FROM tableWithOptionalAlias ( ',' tableWithOptionalAlias )* )?
+   ( K_WHERE expr )?
+ ;
 
 expr
  : literalValue
@@ -52,11 +57,6 @@ expr
  ;
 
 
-selectCore
- : K_SELECT resultColumn ( ',' resultColumn )*
-   ( K_FROM tableWithOptionalAlias ( ',' tableWithOptionalAlias )* )?
-   ( K_WHERE expr )?
- ;
 
 resultColumn
  : '*'
@@ -109,6 +109,7 @@ keyword
  | K_LEFT
  | K_LIKE
  | K_LIMIT
+ | K_MATERIALIZED
  | K_NATURAL
  | K_NOT
  | K_NOTNULL
@@ -128,6 +129,10 @@ keyword
 
 
 tableName
+ : IDENTIFIER
+ ;
+
+viewName
  : IDENTIFIER
  ;
 
@@ -196,6 +201,7 @@ K_JOIN : J O I N;
 K_LEFT : L E F T;
 K_LIKE : L I K E;
 K_LIMIT : L I M I T;
+K_MATERIALIZED : M A T E R I A L I Z E D;
 K_NATURAL : N A T U R A L;
 K_NOT : N O T;
 K_NOTNULL : N O T N U L L;

@@ -17,7 +17,7 @@ public class DatabaseParserTest {
     @Test
     public void testSingleTable() {
         BroccoliDatabaseBuilder builder = new BroccoliDatabaseBuilder();
-        DatabaseAST db = builder.build("create table xxx (id VARCHAR)");
+        DatabaseAST db = builder.build("create table xxx (id \nVARCHAR)");
 
         assertEquals(1, db.getTables().size());
         assertEquals("xxx", db.getTables().head().getName());
