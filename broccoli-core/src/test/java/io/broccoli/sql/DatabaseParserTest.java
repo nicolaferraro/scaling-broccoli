@@ -7,6 +7,7 @@ import io.broccoli.sql.ast.DatabaseAST;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author nicola
@@ -60,7 +61,15 @@ public class DatabaseParserTest {
     @Test
     public void testParseQuery() {
         BroccoliDatabaseBuilder builder = new BroccoliDatabaseBuilder();
-        builder.build("create table xxx (id VARCHAR); create materialized view yyy as (select 1+2*(3%1), xxx.* from xxx)");
+        builder.build("create table xxx (id VARCHAR); create materialized view yyy as (select 1+2*(3%1), xxx.* from xxx where 1=1 or 2<4)");
+    }
+
+    @Test
+    public void testParseDB() throws Exception {
+        BroccoliDatabaseBuilder builder = new BroccoliDatabaseBuilder();
+        DatabaseAST db = builder.build(getClass().getResourceAsStream("/sales.sql"));
+        assertTrue(db.getTables().size() >= 2);
+        assertTrue(db.getViews().size() >= 1);
     }
 
 }

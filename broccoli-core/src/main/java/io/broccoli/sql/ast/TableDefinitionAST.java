@@ -2,16 +2,17 @@ package io.broccoli.sql.ast;
 
 import javaslang.collection.List;
 import lombok.Data;
+import lombok.Value;
 
 /**
  * @author nicola
  * @since 09/05/2017
  */
 @Data
-public class ViewAST {
+public class TableDefinitionAST {
 
     private String name;
 
-    private SelectStatementAST query;
+    private List<ColumnDefinitionAST> columns;
 
 }

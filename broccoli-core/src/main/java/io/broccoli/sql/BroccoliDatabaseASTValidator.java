@@ -1,7 +1,7 @@
 package io.broccoli.sql;
 
 import io.broccoli.sql.ast.DatabaseAST;
-import io.broccoli.sql.ast.TableAST;
+import io.broccoli.sql.ast.TableDefinitionAST;
 
 import javaslang.collection.List;
 
@@ -25,7 +25,7 @@ public class BroccoliDatabaseASTValidator {
                 },
                 d -> {
                     // No duplicate columns
-                    for (TableAST table : d.getTables()) {
+                    for (TableDefinitionAST table : d.getTables()) {
                         if (table.getColumns().map(c -> c.getName()).distinct().size() < table.getColumns().size()) {
                             return List.of("Duplicate column names in table " + table.getName());
                         }

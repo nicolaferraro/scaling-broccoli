@@ -1,6 +1,7 @@
 package io.broccoli.sql.ast;
 
 import javaslang.collection.List;
+import javaslang.collection.Map;
 import lombok.Data;
 
 /**
@@ -10,6 +11,10 @@ import lombok.Data;
 @Data
 public class SelectStatementAST {
 
-    List<ResultColumnAST> resultColumns;
+    private List<ResultColumnAST> resultColumns;
+
+    private List<SourceSelectionAST> sourceSelections;
+
+    private ExpressionAST filter;
 
 }

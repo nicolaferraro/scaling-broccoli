@@ -86,7 +86,7 @@ public class ExpressionVisitor extends BroccoliBaseVisitor<ExpressionAST> {
             op.setOperation(ExpressionBinaryOperationAST.BinaryOperationAST.LT);
         } else if (ctx.LT_EQ() != null) {
             op.setOperation(ExpressionBinaryOperationAST.BinaryOperationAST.LTE);
-        } if (ctx.GT() != null) {
+        } else if (ctx.GT() != null) {
             op.setOperation(ExpressionBinaryOperationAST.BinaryOperationAST.GT);
         } else if (ctx.GT_EQ() != null) {
             op.setOperation(ExpressionBinaryOperationAST.BinaryOperationAST.GTE);
@@ -105,7 +105,7 @@ public class ExpressionVisitor extends BroccoliBaseVisitor<ExpressionAST> {
             op.setOperation(ExpressionBinaryOperationAST.BinaryOperationAST.EQ);
         } else if (ctx.NOT_EQ1() != null || ctx.NOT_EQ2() != null || (ctx.K_IS() != null && ctx.K_NOT() != null)) {
             op.setOperation(ExpressionBinaryOperationAST.BinaryOperationAST.NOT_EQ);
-        } if (ctx.K_LIKE() != null) {
+        } else if (ctx.K_LIKE() != null) {
             op.setOperation(ExpressionBinaryOperationAST.BinaryOperationAST.LIKE);
         } else {
             throw new IllegalStateException("Unknown operation");

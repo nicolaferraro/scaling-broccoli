@@ -6,8 +6,9 @@ import io.broccoli.sql.ast.DatabaseAST;
 import io.broccoli.sql.ast.ExpressionAST;
 import io.broccoli.sql.ast.ResultColumnAST;
 import io.broccoli.sql.ast.SelectStatementAST;
-import io.broccoli.sql.ast.TableAST;
-import io.broccoli.sql.ast.ViewAST;
+import io.broccoli.sql.ast.SourceSelectionAST;
+import io.broccoli.sql.ast.TableDefinitionAST;
+import io.broccoli.sql.ast.ViewDefinitionAST;
 
 import javaslang.collection.List;
 
@@ -32,12 +33,12 @@ public class BroccoliDatabaseListener extends BroccoliBaseListener {
 
     @Override
     public void enterCreateTableStatement(BroccoliParser.CreateTableStatementContext ctx) {
-        TableAST table = toAST(ctx);
+        TableDefinitionAST table = toAST(ctx);
         database.setTables(database.getTables().append(table));
     }
 
-    public TableAST toAST(BroccoliParser.CreateTableStatementContext ctx) {
-        TableAST table = new TableAST();
+    public TableDefinitionAST toAST(BroccoliParser.CreateTableStatementContext ctx) {
+        TableDefinitionAST table = new TableDefinitionAST();
         table.setName(ctx.tableName().getText());
         table.setColumns(List.ofAll(ctx.columnDefinitionList().columnDefinition()).map(this::toAST));
         return table;
@@ -56,12 +57,12 @@ public class BroccoliDatabaseListener extends BroccoliBaseListener {
 
     @Override
     public void enterCreateViewStatement(BroccoliParser.CreateViewStatementContext ctx) {
-        ViewAST view = toAST(ctx);
+        ViewDefinitionAST view = toAST(ctx);
         database.setViews(database.getViews().append(view));
     }
 
-    public ViewAST toAST(BroccoliParser.CreateViewStatementContext ctx) {
-        ViewAST view = new ViewAST();
+    public ViewDefinitionAST toAST(BroccoliParser.CreateViewStatementContext ctx) {
+        ViewDefinitionAST view = new ViewDefinitionAST();
         view.setName(ctx.viewName().getText());
         view.setQuery(toAST(ctx.selectStatement()));
         return view;
@@ -74,6 +75,8 @@ public class BroccoliDatabaseListener extends BroccoliBaseListener {
     public SelectStatementAST toAST(BroccoliParser.SelectStatementContext ctx) {
         SelectStatementAST select = new SelectStatementAST();
         select.setResultColumns(List.ofAll(ctx.resultColumn()).map(this::toAST));
+        select.setSourceSelections(List.ofAll(ctx.tableWithOptionalAlias()).map(this::toAST));
+        select.setFilter(toAST(ctx.expr()));
         return select;
     }
 
@@ -91,6 +94,17 @@ public class BroccoliDatabaseListener extends BroccoliBaseListener {
             }
         }
         return result;
+    }
+
+    public SourceSelectionAST toAST(BroccoliParser.TableWithOptionalAliasContext ctx) {
+        SourceSelectionAST source = new SourceSelectionAST();
+        source.setName(ctx.tableName().getText());
+        if (ctx.tableAlias() != null) {
+            source.setAlias(ctx.tableAlias().getText());
+        } else {
+            source.setAlias(ctx.tableName().getText());
+        }
+        return source;
     }
 
     public ExpressionAST toAST(BroccoliParser.ExprContext ctx) {

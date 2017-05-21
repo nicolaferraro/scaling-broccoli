@@ -10,8 +10,8 @@ import lombok.Data;
 @Data
 public class DatabaseAST {
 
-    private List<TableAST> tables;
+    private List<TableDefinitionAST> tables;
 
-    private List<ViewAST> views;
+    private List<ViewDefinitionAST> views;
 
 }
