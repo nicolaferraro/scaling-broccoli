@@ -42,18 +42,18 @@ selectStatement
  ;
 
 expr
- : literalValue
- | BIND_PARAMETER
- | ( tableName '.' )? columnName
- | unaryOperator expr
- | expr ( '*' | '/' | '%' ) expr
- | expr ( '+' | '-' ) expr
- | expr ( '<' | '<=' | '>' | '>=' ) expr
- | expr ( '=' | '==' | '!=' | '<>' | K_IS | K_IS K_NOT | K_IN | K_LIKE ) expr
- | expr K_AND expr
- | expr K_OR expr
- | '(' expr ')'
- | expr ( K_ISNULL | K_NOTNULL | K_NOT K_NULL )
+ : literalValue                                                                     # ExprLiteral
+ | BIND_PARAMETER                                                                   # ExprBindParam // TODO later (do not use it in definitions)
+ | ( tableName '.' )? columnName                                                    # ExprColumn
+ | unaryOperator expr                                                               # ExprUnary
+ | expr ( STAR | DIV | MOD ) expr                                                   # ExprMultDivMod
+ | expr ( PLUS | MINUS ) expr                                                       # ExprPlusMinus
+ | expr ( LT | LT_EQ | GT | GT_EQ ) expr                                            # ExprComparison
+ | expr ( ASSIGN | EQ | NOT_EQ1 | NOT_EQ2 | K_IS | K_IS K_NOT | K_LIKE ) expr       # ExprEquality
+ | expr K_AND expr                                                                  # ExprAnd
+ | expr K_OR expr                                                                   # ExprOr
+ | OPEN_PAR expr CLOSE_PAR                                                          # ExprParenthesis
+ | expr ( K_ISNULL | K_NOTNULL | K_NOT K_NULL )                                     # ExprNullCheck
  ;
 
 
@@ -63,6 +63,8 @@ resultColumn
  | tableName '.' '*'
  | expr ( K_AS? columnAlias )?
  ;
+
+
 
 tableWithOptionalAlias
  : tableName ( K_AS? tableAlias )?
@@ -75,9 +77,8 @@ literalValue
  ;
 
 unaryOperator
- : '-'
- | '+'
- | '~'
+ : MINUS
+ | PLUS
  | K_NOT
  ;
 

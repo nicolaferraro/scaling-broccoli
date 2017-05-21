@@ -1,5 +1,7 @@
 package io.broccoli.sql.ast;
 
+import java.math.BigDecimal;
+
 import lombok.Data;
 
 /**
@@ -7,14 +9,10 @@ import lombok.Data;
  * @since 21/05/2017
  */
 @Data
-public class ResultColumnAST {
-
-    private boolean wildcard;
+public class ExpressionColumnAST extends ExpressionAST {
 
     private String tableName;
 
-    private ExpressionAST expression;
-
-    private String expressionAlias;
+    private String columnName;
 
 }

@@ -56,4 +56,11 @@ public class DatabaseParserTest {
         BroccoliDatabaseBuilder builder = new BroccoliDatabaseBuilder();
         builder.build("create table xxx (id VARCHAR); create table yyy (name INTEGER, name VARCHAR)");
     }
+
+    @Test
+    public void testParseQuery() {
+        BroccoliDatabaseBuilder builder = new BroccoliDatabaseBuilder();
+        builder.build("create table xxx (id VARCHAR); create materialized view yyy as (select 1+2*(3%1), xxx.* from xxx)");
+    }
+
 }
