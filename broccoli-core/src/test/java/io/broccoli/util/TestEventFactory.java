@@ -15,10 +15,10 @@
  */
 package io.broccoli.util;
 
-import io.broccoli.stream.Event;
-import io.broccoli.stream.basic.BasicCell;
-import io.broccoli.stream.basic.BasicEvent;
-import io.broccoli.stream.basic.BasicRow;
+import io.broccoli.core.Event;
+import io.broccoli.core.basic.BasicCell;
+import io.broccoli.core.basic.BasicEvent;
+import io.broccoli.core.basic.BasicRow;
 import io.broccoli.versioning.Version;
 
 import javaslang.collection.List;

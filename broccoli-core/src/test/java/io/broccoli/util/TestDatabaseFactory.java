@@ -16,21 +16,15 @@
 package io.broccoli.util;
 
 
-import java.time.Duration;
-import java.util.Objects;
-
-import io.broccoli.stream.Cell;
-import io.broccoli.stream.Database;
-import io.broccoli.stream.Event;
-import io.broccoli.stream.Streamable;
-import io.broccoli.stream.Table;
-import io.broccoli.stream.basic.BasicCell;
-import io.broccoli.stream.basic.BasicDatabase;
-import io.broccoli.stream.basic.BasicEvent;
-import io.broccoli.stream.basic.BasicFluxStreamable;
-import io.broccoli.stream.basic.BasicRow;
-import io.broccoli.stream.basic.BasicSetCacheStreamable;
-import io.broccoli.versioning.Version;
+import io.broccoli.core.Cell;
+import io.broccoli.core.Event;
+import io.broccoli.core.Streamable;
+import io.broccoli.core.Table;
+import io.broccoli.core.basic.BasicCell;
+import io.broccoli.core.basic.BasicEvent;
+import io.broccoli.core.basic.BasicFluxStreamable;
+import io.broccoli.core.basic.BasicRow;
+import io.broccoli.core.basic.BasicSetCacheStreamable;
 import io.broccoli.versioning.VersioningSystem;
 
 import org.junit.Assert;

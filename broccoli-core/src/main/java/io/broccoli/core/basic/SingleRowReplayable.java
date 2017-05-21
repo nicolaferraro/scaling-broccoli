@@ -13,39 +13,29 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package io.broccoli.util;
-
+package io.broccoli.core.basic;
 
 import io.broccoli.core.Replayable;
 import io.broccoli.core.Row;
 import io.broccoli.versioning.Version;
 
-import org.junit.Assert;
-
-import javaslang.collection.HashSet;
-import javaslang.collection.List;
 import reactor.core.publisher.Flux;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author nicola
- * @since 18/04/2017
+ * @since 14/04/2017
  */
-public final class StreamUtils {
+public class SingleRowReplayable implements Replayable {
 
-    private StreamUtils() {
+    private Row row;
+
+    public SingleRowReplayable(Row row) {
+        this.row = row;
     }
 
-    public static void assertEquals(Replayable r1, Replayable r2, Version version) {
-        assertEquals(r1.stream(version), r2.stream(version));
-    }
-
-    public static void assertEquals(Flux<Row> r1, Flux<Row> r2) {
-        List<Row> rows1 = List.ofAll(r1.collectList().block());
-        List<Row> rows2 = List.ofAll(r2.collectList().block());
-        Assert.assertEquals(rows1.size(), rows2.size());
-        Assert.assertEquals(HashSet.ofAll(rows1), HashSet.ofAll(rows2));
+    @Override
+    public Flux<Row> stream(Version version) {
+        return Flux.just(row);
     }
 
 }
