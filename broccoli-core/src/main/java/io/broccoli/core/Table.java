@@ -19,5 +19,5 @@ package io.broccoli.core;
  * @author nicola
  * @since 14/04/2017
  */
-public interface Table extends Replayable, Streamable {
+public interface Table extends Replayable, Streamable, Structured {
 }

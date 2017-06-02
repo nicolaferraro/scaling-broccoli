@@ -17,7 +17,9 @@ package io.broccoli.core.basic;
 
 import io.broccoli.core.Event;
 import io.broccoli.core.Streamable;
+import io.broccoli.core.Type;
 
+import javaslang.collection.List;
 import reactor.core.publisher.Flux;
 
 /**
@@ -30,9 +32,25 @@ public class BasicFluxStreamable implements Streamable {
 
     private Flux<Event> flux;
 
-    public BasicFluxStreamable(String name, Flux<Event> flux) {
+    private List<String> names;
+
+    private List<Type> types;
+
+    public BasicFluxStreamable(String name, List<String> names, List<Type> types, Flux<Event> flux) {
         this.name = name;
         this.flux = flux;
+        this.names = names;
+        this.types = types;
+    }
+
+    @Override
+    public List<String> names() {
+        return this.names;
+    }
+
+    @Override
+    public List<Type> types() {
+        return this.types;
     }
 
     @Override

@@ -23,6 +23,7 @@ import io.broccoli.core.Event;
 import io.broccoli.core.Replayable;
 import io.broccoli.core.Row;
 import io.broccoli.core.Streamable;
+import io.broccoli.core.Type;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
@@ -54,6 +55,16 @@ public class BasicLastStreamable<U extends Comparable<? super U>> implements Str
         this.groupBy = groupBy;
         this.orderBy = orderBy;
         this.cache = new SimpleVersionedMap<>(versioningSystem.zero());
+    }
+
+    @Override
+    public List<String> names() {
+        return source.names();
+    }
+
+    @Override
+    public List<Type> types() {
+        return source.types();
     }
 
     @Override

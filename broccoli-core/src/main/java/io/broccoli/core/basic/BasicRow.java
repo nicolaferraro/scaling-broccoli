@@ -15,11 +15,12 @@
  */
 package io.broccoli.core.basic;
 
-import io.broccoli.core.Cell;
+import java.util.Objects;
+
 import io.broccoli.core.Row;
 
 import javaslang.collection.List;
-import javaslang.collection.Traversable;
+import javaslang.collection.Seq;
 
 /**
  * @author nicola
@@ -27,30 +28,15 @@ import javaslang.collection.Traversable;
  */
 public class BasicRow implements Row {
 
-    private List<Cell> cells;
+    private List<Object> cells;
 
-    public BasicRow(List<Cell> cells) {
-        this.cells = cells;
+    public BasicRow(List<Object> cells) {
+        this.cells = Objects.requireNonNull(cells, "cells cannot be null");
     }
 
     @Override
-    public int size() {
-        return cells.size();
-    }
-
-    @Override
-    public Traversable<Cell> cells() {
-        return cells;
-    }
-
-    @Override
-    public Cell cell(int pos) {
-        return cells.get(pos);
-    }
-
-    @Override
-    public Cell cell(String name) {
-        return cell(cells.indexWhere(c -> name.equals(c.name())));
+    public Seq<Object> cells() {
+        return this.cells;
     }
 
     @Override
@@ -60,15 +46,14 @@ public class BasicRow implements Row {
 
         BasicRow basicRow = (BasicRow) o;
 
-        return cells != null ? cells.equals(basicRow.cells) : basicRow.cells == null;
+        return cells.equals(basicRow.cells);
 
     }
 
     @Override
     public int hashCode() {
-        return cells != null ? cells.hashCode() : 0;
+        return cells.hashCode();
     }
-
 
     @Override
     public String toString() {

@@ -16,29 +16,41 @@
 package io.broccoli.core.basic;
 
 import io.broccoli.core.Event;
-import io.broccoli.core.Replayable;
 import io.broccoli.core.Streamable;
+import io.broccoli.core.Table;
+import io.broccoli.core.Type;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
+import javaslang.collection.List;
 import reactor.core.publisher.Flux;
 
 /**
  * @author nicola
  * @since 18/04/2017
  */
-public class BasicReplayableReplayer implements Streamable {
+public class BasicTableReplayer implements Streamable {
 
     private String name;
-    private Replayable replayable;
+    private Table table;
     private Version version;
     private VersioningSystem v;
 
-    public BasicReplayableReplayer(String name, Replayable replayable, Version version, VersioningSystem v) {
+    public BasicTableReplayer(String name, Table table, Version version, VersioningSystem v) {
         this.name = name;
-        this.replayable = replayable;
+        this.table = table;
         this.version = version;
         this.v = v;
+    }
+
+    @Override
+    public List<String> names() {
+        return table.names();
+    }
+
+    @Override
+    public List<Type> types() {
+        return table.types();
     }
 
     @Override
@@ -53,6 +65,6 @@ public class BasicReplayableReplayer implements Streamable {
 
     @Override
     public Flux<Event> changes() {
-        return replayable.stream(version).map(r -> new BasicEvent(r, Event.EventType.ADD, v.newSubVersion(version)));
+        return table.stream(version).map(r -> new BasicEvent(r, Event.EventType.ADD, v.newSubVersion(version)));
     }
 }

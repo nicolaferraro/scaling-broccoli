@@ -23,7 +23,6 @@ import io.broccoli.core.basic.AggregateFactory;
 import io.broccoli.core.basic.BasicAggregateStreamable;
 import io.broccoli.core.basic.BasicCartesianStreamable;
 import io.broccoli.core.basic.BasicCountAggregate;
-import io.broccoli.core.basic.BasicDatabase;
 import io.broccoli.core.basic.BasicEvent;
 import io.broccoli.core.basic.BasicFilterStreamable;
 import io.broccoli.core.basic.BasicFluxStreamable;
@@ -33,7 +32,6 @@ import io.broccoli.core.basic.BasicRow;
 import io.broccoli.core.basic.BasicSetCacheStreamable;
 import io.broccoli.util.TestEventFactory;
 import io.broccoli.versioning.BasicVersioningSystem;
-import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import org.junit.Before;
@@ -41,7 +39,6 @@ import org.junit.Test;
 
 import javaslang.collection.List;
 import javaslang.collection.Traversable;
-import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 
 import static org.junit.Assert.assertEquals;
@@ -64,6 +61,8 @@ public class StreamableTest {
     @Test
     public void testFluxStreamable() {
         Streamable source = new BasicFluxStreamable("source",
+                List.of("A", "B", "C"),
+                List.of(Type.STRING, Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "Hello", "World")
                 ));
@@ -72,52 +71,58 @@ public class StreamableTest {
         Event evt = source.changes().single().block();
         assertNotNull(evt);
         assertEquals(v.get(1), evt.version());
-        assertEquals(List.of("1", "Hello", "World"), evt.row().cells().map(Cell::value));
+        assertEquals(List.of("1", "Hello", "World"), evt.row().cells());
     }
 
     @Test
     public void testFilterStreamable() {
         Streamable source = new BasicFluxStreamable("source",
+                List.of("A", "B", "C"),
+                List.of(Type.STRING, Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "Hello", "World"),
                         TestEventFactory.add(v.next(), "2", "From", "Broccoli"),
                         TestEventFactory.remove(v.next(), "2", "From", "Broccoli")
                 ));
 
-        Streamable filter = new BasicFilterStreamable("filter", r -> Integer.parseInt((String) r.cell(0).value()) % 2 == 0, source);
+        Streamable filter = new BasicFilterStreamable("filter", r -> Integer.parseInt((String) r.cell(0)) % 2 == 0, source);
 
         List<Event> evts = List.ofAll(filter.changes().collectList().block());
         assertNotNull(evts);
         assertEquals(3, evts.size());
         assertEquals(Event.EventType.NOOP, evts.get(0).eventType());
-        assertEquals(List.of("2", "From", "Broccoli"), evts.get(1).row().cells().map(Cell::value));
+        assertEquals(List.of("2", "From", "Broccoli"), evts.get(1).row().cells());
         assertEquals(Event.EventType.ADD, evts.get(1).eventType());
-        assertEquals(List.of("2", "From", "Broccoli"), evts.get(2).row().cells().map(Cell::value));
+        assertEquals(List.of("2", "From", "Broccoli"), evts.get(2).row().cells());
         assertEquals(Event.EventType.REMOVE, evts.get(2).eventType());
     }
 
     @Test
     public void testProjectionStreamable() {
         Streamable source = new BasicFluxStreamable("source",
+                List.of("A", "B", "C"),
+                List.of(Type.STRING, Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "Hello", "World"),
                         TestEventFactory.remove(v.next(), "1", "Hello", "World")
                 ));
 
-        Streamable projection = new BasicProjectionStreamable("projection", source, v, "s2", "s1");
+        Streamable projection = new BasicProjectionStreamable("projection", source, v, "C", "B");
 
         List<Event> evts = List.ofAll(projection.changes().collectList().block());
         assertNotNull(evts);
         assertEquals(2, evts.size());
-        assertEquals(List.of("World", "Hello"), evts.get(0).row().cells().map(Cell::value));
+        assertEquals(List.of("World", "Hello"), evts.get(0).row().cells());
         assertEquals(Event.EventType.ADD, evts.get(0).eventType());
-        assertEquals(List.of("World", "Hello"), evts.get(1).row().cells().map(Cell::value));
+        assertEquals(List.of("World", "Hello"), evts.get(1).row().cells());
         assertEquals(Event.EventType.REMOVE, evts.get(1).eventType());
     }
 
     @Test
     public void testProjectionStreamableFakeRemoval() {
         Streamable source = new BasicFluxStreamable("source",
+                List.of("A", "B", "C"),
+                List.of(Type.STRING, Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "Hello", "World"),
                         TestEventFactory.add(v.next(), "2", "Hello", "World"),
@@ -125,22 +130,24 @@ public class StreamableTest {
                         TestEventFactory.remove(v.next(), "2", "Hello", "World")
                 ));
 
-        Streamable projection = new BasicProjectionStreamable("projection", source, v, "s1", "s2");
+        Streamable projection = new BasicProjectionStreamable("projection", source, v, "B", "C");
 
         List<Event> evts = List.ofAll(projection.changes().collectList().block());
         assertNotNull(evts);
         assertEquals(4, evts.size());
         assertEquals(Event.EventType.ADD, evts.get(0).eventType());
-        assertEquals(List.of("Hello", "World"), evts.get(0).row().cells().map(Cell::value));
+        assertEquals(List.of("Hello", "World"), evts.get(0).row().cells());
         assertEquals(Event.EventType.NOOP, evts.get(1).eventType());
         assertEquals(Event.EventType.NOOP, evts.get(2).eventType());
         assertEquals(Event.EventType.REMOVE, evts.get(3).eventType());
-        assertEquals(List.of("Hello", "World"), evts.get(3).row().cells().map(Cell::value));
+        assertEquals(List.of("Hello", "World"), evts.get(3).row().cells());
     }
 
     @Test
     public void testSetCacheStreamable() throws InterruptedException {
         Streamable source = new BasicFluxStreamable("source",
+                List.of("A", "B", "C"),
+                List.of(Type.STRING, Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "Hello", "World"),
                         TestEventFactory.remove(v.next(), "1", "Hello", "World"),
@@ -157,18 +164,20 @@ public class StreamableTest {
         latch.await(5, TimeUnit.SECONDS);
 
         List<Row> rows2 = List.ofAll(cache.stream(v.get(3)).collectList().block());
-        assertEquals(List.of("1", "Hello", "Broccoli"), rows2.get(0).cells().map(Cell::value));
+        assertEquals(List.of("1", "Hello", "Broccoli"), rows2.get(0).cells());
 
         List<Row> rows1 = List.ofAll(cache.stream(v.get(2)).collectList().block());
         assertEquals(List.empty(), rows1);
 
         List<Row> rows0 = List.ofAll(cache.stream(v.get(1)).collectList().block());
-        assertEquals(List.of("1", "Hello", "World"), rows0.get(0).cells().map(Cell::value));
+        assertEquals(List.of("1", "Hello", "World"), rows0.get(0).cells());
     }
 
     @Test
     public void testSetCacheStreamableEvents() throws InterruptedException {
         Streamable source = new BasicFluxStreamable("source",
+                List.of("A", "B", "C"),
+                List.of(Type.STRING, Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.remove(v.next(), "1", "Hello", "World"),
                         TestEventFactory.add(v.next(), "1", "Hello", "World"),
@@ -186,18 +195,18 @@ public class StreamableTest {
         assertEquals(Event.EventType.NOOP, evts.get(0).eventType());
         assertEquals(v.get(1), evts.get(0).version());
 
-        assertEquals(List.of("1", "Hello", "World"), evts.get(1).row().cells().map(Cell::value));
+        assertEquals(List.of("1", "Hello", "World"), evts.get(1).row().cells());
         assertEquals(Event.EventType.ADD, evts.get(1).eventType());
         assertEquals(v.get(2), evts.get(1).version());
 
         assertEquals(Event.EventType.NOOP, evts.get(2).eventType());
         assertEquals(v.get(3), evts.get(2).version());
 
-        assertEquals(List.of("1", "Hello", "World2"), evts.get(3).row().cells().map(Cell::value));
+        assertEquals(List.of("1", "Hello", "World2"), evts.get(3).row().cells());
         assertEquals(Event.EventType.ADD, evts.get(3).eventType());
         assertEquals(v.get(4), evts.get(3).version());
 
-        assertEquals(List.of("1", "Hello", "World"), evts.get(4).row().cells().map(Cell::value));
+        assertEquals(List.of("1", "Hello", "World"), evts.get(4).row().cells());
         assertEquals(Event.EventType.REMOVE, evts.get(4).eventType());
         assertEquals(v.get(5), evts.get(4).version());
     }
@@ -205,6 +214,8 @@ public class StreamableTest {
     @Test
     public void testLastStreamable() throws InterruptedException {
         Streamable source = new BasicFluxStreamable("source",
+                List.of("A", "B", "C"),
+                List.of(Type.STRING, Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "Hello", "World"),
                         TestEventFactory.add(v.next(), "2", "Hello", "Worlde"),
@@ -214,7 +225,7 @@ public class StreamableTest {
                         TestEventFactory.remove(v.next(), "1", "Hello", "World")
                 ));
 
-        BasicLastStreamable<String> last = new BasicLastStreamable<>("last", source, v, r -> new BasicRow(List.of(r.cell("s1"))), r -> (String) r.cell("s0").value());
+        BasicLastStreamable<String> last = new BasicLastStreamable<>("last", source, v, r -> new BasicRow(List.of(r.cell(1))), r -> (String) r.cell(0));
 
         CountDownLatch latch = new CountDownLatch(1);
         last.changes()
@@ -228,23 +239,23 @@ public class StreamableTest {
 
         List<Row> rows5 = List.ofAll(last.stream(v.get(5)).collectList().block());
         assertEquals(1, rows5.size());
-        assertEquals(List.of("1", "Hello", "World"), rows5.get(0).cells().map(Cell::value));
+        assertEquals(List.of("1", "Hello", "World"), rows5.get(0).cells());
 
         List<Row> rows4 = List.ofAll(last.stream(v.get(4)).collectList().block());
         assertEquals(1, rows4.size());
-        assertEquals(List.of("2", "Hello", "Worlde"), rows4.get(0).cells().map(Cell::value));
+        assertEquals(List.of("2", "Hello", "Worlde"), rows4.get(0).cells());
 
         List<Row> rows3 = List.ofAll(last.stream(v.get(3)).collectList().block());
         assertEquals(1, rows3.size());
-        assertEquals(List.of("3", "Hello", "Broccoli"), rows3.get(0).cells().map(Cell::value));
+        assertEquals(List.of("3", "Hello", "Broccoli"), rows3.get(0).cells());
 
         List<Row> rows2 = List.ofAll(last.stream(v.get(2)).collectList().block());
         assertEquals(1, rows2.size());
-        assertEquals(List.of("2", "Hello", "Worlde"), rows2.get(0).cells().map(Cell::value));
+        assertEquals(List.of("2", "Hello", "Worlde"), rows2.get(0).cells());
 
         List<Row> rows1 = List.ofAll(last.stream(v.get(1)).collectList().block());
         assertEquals(1, rows1.size());
-        assertEquals(List.of("1", "Hello", "World"), rows1.get(0).cells().map(Cell::value));
+        assertEquals(List.of("1", "Hello", "World"), rows1.get(0).cells());
 
         List<Row> rows0 = List.ofAll(last.stream(v.get(0)).collectList().block());
         assertEquals(0, rows0.size());
@@ -254,6 +265,8 @@ public class StreamableTest {
     @Test
     public void testCountStreamable() throws InterruptedException {
         Streamable source = new BasicFluxStreamable("source",
+                List.of("A", "B", "C"),
+                List.of(Type.STRING, Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "Hello", "World"),
                         TestEventFactory.add(v.next(), "2", "Hello", "Worlde"),
@@ -263,7 +276,28 @@ public class StreamableTest {
                         TestEventFactory.remove(v.next(), "1", "Hello", "World")
                 ));
 
-        BasicAggregateStreamable count = new BasicAggregateStreamable("count", source, v, r -> new BasicRow(List.of(r.cell("s1"))), new AggregateFactory<Long>() {
+        BasicAggregateStreamable count = new BasicAggregateStreamable("count", source, v, new Structured() {
+            @Override
+            public List<String> names() {
+                return List.of("B");
+            }
+
+            @Override
+            public List<Type> types() {
+                return List.of(Type.STRING);
+            }
+        }, r -> new BasicRow(List.of(r.cell(1))), new AggregateFactory<Long>() {
+
+            @Override
+            public String name() {
+                return "count(*)";
+            }
+
+            @Override
+            public Type type() {
+                return Type.INTEGER;
+            }
+
             @Override
             public Aggregate<Long> newAggregate() {
                 return new BasicCountAggregate("count(*)");
@@ -282,28 +316,28 @@ public class StreamableTest {
 
         List<Row> rows5 = List.ofAll(count.stream(v.get(5)).collectList().block());
         assertEquals(1, rows5.size());
-        List<Traversable<String>> table5 = rows5.map(r -> r.cells().map(c -> c.value().toString()));
+        List<Traversable<String>> table5 = rows5.map(r -> r.cells().map(Object::toString));
         assertTrue(table5.contains(List.of("Hello", "1")));
 
         List<Row> rows4 = List.ofAll(count.stream(v.get(4)).collectList().block());
         assertEquals(1, rows4.size());
-        List<Traversable<String>> table4 = rows4.map(r -> r.cells().map(c -> c.value().toString()));
+        List<Traversable<String>> table4 = rows4.map(r -> r.cells().map(Object::toString));
         assertTrue(table4.contains(List.of("Hello", "2")));
 
         List<Row> rows3 = List.ofAll(count.stream(v.get(3)).collectList().block());
         assertEquals(2, rows3.size());
-        List<Traversable<String>> table3 = rows3.map(r -> r.cells().map(c -> c.value().toString()));
+        List<Traversable<String>> table3 = rows3.map(r -> r.cells().map(Object::toString));
         assertTrue(table3.contains(List.of("Hello", "2")));
         assertTrue(table3.contains(List.of("Hello2", "1")));
 
         List<Row> rows2 = List.ofAll(count.stream(v.get(2)).collectList().block());
         assertEquals(1, rows2.size());
-        List<Traversable<String>> table2 = rows2.map(r -> r.cells().map(c -> c.value().toString()));
+        List<Traversable<String>> table2 = rows2.map(r -> r.cells().map(Object::toString));
         assertTrue(table2.contains(List.of("Hello", "2")));
 
         List<Row> rows1 = List.ofAll(count.stream(v.get(1)).collectList().block());
         assertEquals(1, rows1.size());
-        List<Traversable<String>> table1 = rows1.map(r -> r.cells().map(c -> c.value().toString()));
+        List<Traversable<String>> table1 = rows1.map(r -> r.cells().map(Object::toString));
         assertTrue(table1.contains(List.of("Hello", "1")));
 
         List<Row> rows0 = List.ofAll(count.stream(v.get(0)).collectList().block());
@@ -314,16 +348,20 @@ public class StreamableTest {
     @Test
     public void testCartesianStreamable() throws InterruptedException {
         Streamable source1 = new BasicFluxStreamable("source1",
+                List.of("A", "B"),
+                List.of(Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "A"),
                         TestEventFactory.add(v.next(), "2", "B"),
                         TestEventFactory.remove(v.next(), "2", "B")
                 ));
         Streamable source2 = new BasicFluxStreamable("source2",
+                List.of("C", "D"),
+                List.of(Type.STRING, Type.STRING),
                 Flux.just(
-                        TestEventFactory.add(v.next(), Option.of("r"), "--1", "--A"),
-                        TestEventFactory.add(v.next(), Option.of("r"), "--2", "--B"),
-                        TestEventFactory.remove(v.next(), Option.of("r"), "--2", "--B")
+                        TestEventFactory.add(v.next(), "--1", "--A"),
+                        TestEventFactory.add(v.next(), "--2", "--B"),
+                        TestEventFactory.remove(v.next(), "--2", "--B")
                 ));
 
         BasicCartesianStreamable cartesian = new BasicCartesianStreamable("prod", v, source1, source2);
@@ -347,16 +385,20 @@ public class StreamableTest {
     @Test
     public void testCartesianStreamableEvents() throws InterruptedException {
         Streamable source1 = new BasicFluxStreamable("source1",
+                List.of("A", "B"),
+                List.of(Type.STRING, Type.STRING),
                 Flux.just(
                         TestEventFactory.add(v.next(), "1", "A"),
                         TestEventFactory.add(v.next(), "2", "B"),
                         TestEventFactory.remove(v.next(), "2", "B")
                 ));
         Streamable source2 = new BasicFluxStreamable("source2",
+                List.of("C", "D"),
+                List.of(Type.STRING, Type.STRING),
                 Flux.just(
-                        TestEventFactory.add(v.next(), Option.of("r"), "--1", "--A"),
-                        TestEventFactory.add(v.next(), Option.of("r"), "--2", "--B"),
-                        TestEventFactory.remove(v.next(), Option.of("r"), "--2", "--B")
+                        TestEventFactory.add(v.next(), "--1", "--A"),
+                        TestEventFactory.add(v.next(), "--2", "--B"),
+                        TestEventFactory.remove(v.next(), "--2", "--B")
                 ));
 
         BasicCartesianStreamable cartesian = new BasicCartesianStreamable("prod", v, source1, source2);
@@ -367,41 +409,6 @@ public class StreamableTest {
                 .collectList().block());
 
         assertEquals(List.of(Event.EventType.ADD, Event.EventType.ADD, Event.EventType.REMOVE), events);
-    }
-
-    @Test
-    public void testDB() throws InterruptedException {
-
-        Flux<Event> source1 = Flux.just(
-                TestEventFactory.add(v.next(), "1"),
-                TestEventFactory.add(v.next(), "2"),
-                TestEventFactory.remove(v.next(), "2")
-        );
-
-        Flux<Event> source2 = Flux.just(
-                TestEventFactory.add(v.next(), Option.of("r"), "A"),
-                TestEventFactory.add(v.next(), Option.of("r"), "B"),
-                TestEventFactory.add(v.next(), Option.of("r"), "C")
-        );
-
-        Database db = new BasicDatabase.Builder(v)
-                .sourceTable("source1", source1)
-                .sourceTable("source2", source2)
-                .build();
-
-        db.start();
-
-        Version[] versions = new Version[1];
-        CountDownLatch latch = new CountDownLatch(1);
-        db.currentVersion()
-                .doOnNext(version -> versions[0] = version)
-                .doOnComplete(latch::countDown)
-                .subscribe();
-
-        assertEquals(2, db.tables().size());
-
-        latch.await(5, TimeUnit.SECONDS);
-        assertEquals(v.get(6), versions[0]);
     }
 
 }

@@ -22,9 +22,11 @@ import io.broccoli.core.Replayable;
 import io.broccoli.core.Row;
 import io.broccoli.core.Streamable;
 import io.broccoli.core.Table;
+import io.broccoli.core.Type;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
+import javaslang.collection.List;
 import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 
@@ -44,6 +46,16 @@ public class BasicSetCacheStreamable implements Streamable, Replayable, Table {
         this.name = name;
         this.source = source;
         this.cache = new SimpleVersionedMap<>(versioningSystem.zero());
+    }
+
+    @Override
+    public List<String> names() {
+        return source.names();
+    }
+
+    @Override
+    public List<Type> types() {
+        return source.types();
     }
 
     @Override

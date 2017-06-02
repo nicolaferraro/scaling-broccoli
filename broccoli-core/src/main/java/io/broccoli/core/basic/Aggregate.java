@@ -15,8 +15,8 @@
  */
 package io.broccoli.core.basic;
 
-import io.broccoli.core.Cell;
 import io.broccoli.core.Row;
+import io.broccoli.core.Type;
 
 /**
  * @author nicola
@@ -24,11 +24,15 @@ import io.broccoli.core.Row;
  */
 public interface Aggregate<T> {
 
+    String name();
+
+    Type type();
+
     Aggregate<T> add(Row row);
 
     Aggregate<T> remove(Row row);
 
-    Cell get();
+    T get();
 
     long supportingRows();
 

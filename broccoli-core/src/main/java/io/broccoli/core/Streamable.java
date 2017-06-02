@@ -21,7 +21,7 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 14/04/2017
  */
-public interface Streamable {
+public interface Streamable extends Structured {
 
     String name();
 

@@ -15,12 +15,17 @@
  */
 package io.broccoli.core.basic;
 
+import io.broccoli.core.Type;
+
 /**
  * @author nicola
  * @since 14/04/2017
  */
-@FunctionalInterface
 public interface AggregateFactory<T> {
+
+    String name();
+
+    Type type();
 
     Aggregate<T> newAggregate();
 

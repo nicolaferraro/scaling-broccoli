@@ -16,11 +16,10 @@
 package io.broccoli.util;
 
 
-import io.broccoli.core.Cell;
 import io.broccoli.core.Event;
 import io.broccoli.core.Streamable;
 import io.broccoli.core.Table;
-import io.broccoli.core.basic.BasicCell;
+import io.broccoli.core.Type;
 import io.broccoli.core.basic.BasicEvent;
 import io.broccoli.core.basic.BasicFluxStreamable;
 import io.broccoli.core.basic.BasicRow;
@@ -53,6 +52,8 @@ public final class TestDatabaseFactory {
 
         private List<String> columns;
 
+        private List<Type> types;
+
         private List<List<Object>> rows = List.empty();
 
         public StreamBuilder name(String name) {
@@ -70,17 +71,22 @@ public final class TestDatabaseFactory {
             return this;
         }
 
+        public StreamBuilder columns(Type... types) {
+            this.types = List.of(types);
+            return this;
+        }
+
         public StreamBuilder withRow(Object... row) {
             this.rows = this.rows.append(List.of(row));
             return this;
         }
 
         public Streamable build() {
-            Flux<Event> events = Flux.fromIterable(rows.map(lr -> toCells(lr, columns))
+            Flux<Event> events = Flux.fromIterable(rows)
                     .map(BasicRow::new)
-                    .map(r -> new BasicEvent(r, Event.EventType.ADD, v.next())));
+                    .map(r -> new BasicEvent(r, Event.EventType.ADD, v.next()));
 
-            return new BasicFluxStreamable(name, events);
+            return new BasicFluxStreamable(name, columns, types, events);
         }
 
         public Table buildTable() {
@@ -92,10 +98,6 @@ public final class TestDatabaseFactory {
             t.changes().last().block();
             Assert.assertEquals(rows.size(), t.stream(v.current()).collectList().block().size());
             return t;
-        }
-
-        private List<Cell> toCells(List<Object> data, List<String> names) {
-            return data.zip(names).map(t -> new BasicCell(t._2, t._1.getClass(), t._1));
         }
 
     }

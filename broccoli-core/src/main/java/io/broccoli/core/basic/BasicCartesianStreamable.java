@@ -19,6 +19,7 @@ import io.broccoli.core.Event;
 import io.broccoli.core.Replayable;
 import io.broccoli.core.Row;
 import io.broccoli.core.Streamable;
+import io.broccoli.core.Type;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
@@ -47,6 +48,16 @@ public class BasicCartesianStreamable implements Streamable {
                 return new BasicSetCacheStreamable(s.name(), s, versioningSystem);
             }
         });
+    }
+
+    @Override
+    public List<String> names() {
+        return sources.flatMap(Streamable::names);
+    }
+
+    @Override
+    public List<Type> types() {
+        return sources.flatMap(Streamable::types);
     }
 
     @Override

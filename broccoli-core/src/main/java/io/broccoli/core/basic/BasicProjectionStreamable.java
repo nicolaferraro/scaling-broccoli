@@ -22,6 +22,7 @@ import io.broccoli.core.Replayable;
 import io.broccoli.core.Row;
 import io.broccoli.core.Streamable;
 import io.broccoli.core.Table;
+import io.broccoli.core.Type;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
@@ -55,9 +56,19 @@ public class BasicProjectionStreamable implements Streamable, Replayable, Table 
     }
 
     @Override
+    public List<String> names() {
+        return columns;
+    }
+
+    @Override
+    public List<Type> types() {
+        return columns.map(source::type);
+    }
+
+    @Override
     public Flux<Row> stream(Version version) {
         return cache.streamEntries(version)
-                .filter(t -> t._2.longValue() > 0)
+                .filter(t -> t._2 > 0)
                 .map(t -> t._1);
     }
 
@@ -96,7 +107,7 @@ public class BasicProjectionStreamable implements Streamable, Replayable, Table 
     }
 
     private Row projection(Row original) {
-        return new BasicRow(columns.map(original::cell));
+        return new BasicRow(columns.map(n -> original.cell(source.pos(n))));
     }
 
 }

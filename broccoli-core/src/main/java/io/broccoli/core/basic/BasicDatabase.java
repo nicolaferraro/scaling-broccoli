@@ -116,14 +116,6 @@ public class BasicDatabase implements Database {
         }
 
         @Override
-        public Database.Builder sourceTable(String name, Flux<Event> stream) {
-            if (tables.keySet().contains(name)) {
-                throw new IllegalArgumentException("Name already present: " + name);
-            }
-            return new Builder(v, tables.put(name, new BasicSetCacheStreamable(name, new BasicFluxStreamable("source-of-" + name, stream), v)));
-        }
-
-        @Override
         public Database.Builder sourceTable(Table table) {
             if (tables.keySet().contains(table.name())) {
                 throw new IllegalArgumentException("Name already present: " + table.name());

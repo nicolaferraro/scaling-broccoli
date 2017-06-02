@@ -20,7 +20,9 @@ import java.util.function.Predicate;
 import io.broccoli.core.Event;
 import io.broccoli.core.Row;
 import io.broccoli.core.Streamable;
+import io.broccoli.core.Type;
 
+import javaslang.collection.List;
 import reactor.core.publisher.Flux;
 
 /**
@@ -39,6 +41,16 @@ public class BasicFilterStreamable implements Streamable {
         this.name = name;
         this.filter = filter;
         this.source = source;
+    }
+
+    @Override
+    public List<String> names() {
+        return source.names();
+    }
+
+    @Override
+    public List<Type> types() {
+        return source.types();
     }
 
     @Override

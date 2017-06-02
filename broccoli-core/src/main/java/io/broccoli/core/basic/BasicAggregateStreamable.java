@@ -23,6 +23,8 @@ import io.broccoli.core.Event;
 import io.broccoli.core.Replayable;
 import io.broccoli.core.Row;
 import io.broccoli.core.Streamable;
+import io.broccoli.core.Structured;
+import io.broccoli.core.Type;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
@@ -41,6 +43,7 @@ public class BasicAggregateStreamable implements Streamable, Replayable {
 
     private Streamable source;
 
+    private Structured groupBySchema;
     private Function<? super Row, ? extends Row> groupBy;
     private List<AggregateFactory<?>> aggregateFactories;
 
@@ -48,13 +51,25 @@ public class BasicAggregateStreamable implements Streamable, Replayable {
 
     private volatile VersionedMap<Row, List<Aggregate<?>>, Version> cache;
 
-    public BasicAggregateStreamable(String name, Streamable source, VersioningSystem versioningSystem, Function<? super Row, ? extends Row> groupBy, AggregateFactory<?>... aggregateFactories) {
+    public BasicAggregateStreamable(String name, Streamable source, VersioningSystem versioningSystem, Structured groupBySchema, Function<? super Row, ? extends Row> groupBy, AggregateFactory<?>...
+            aggregateFactories) {
         this.name = name;
         this.source = source;
         this.versioningSystem = versioningSystem;
+        this.groupBySchema = groupBySchema;
         this.groupBy = groupBy;
         this.aggregateFactories = List.of(aggregateFactories);
         this.cache = new SimpleVersionedMap<>(versioningSystem.zero());
+    }
+
+    @Override
+    public List<String> names() {
+        return groupBySchema.names().appendAll(aggregateFactories.map(AggregateFactory::name));
+    }
+
+    @Override
+    public List<Type> types() {
+        return groupBySchema.types().appendAll(aggregateFactories.map(AggregateFactory::type));
     }
 
     @Override

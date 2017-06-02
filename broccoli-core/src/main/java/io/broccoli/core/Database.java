@@ -42,8 +42,6 @@ public interface Database {
 
     interface Builder {
 
-        Builder sourceTable(String name, Flux<Event> stream);
-
         Builder sourceTable(Table table);
 
         Database build();

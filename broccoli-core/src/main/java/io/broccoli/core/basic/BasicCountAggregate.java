@@ -15,8 +15,8 @@
  */
 package io.broccoli.core.basic;
 
-import io.broccoli.core.Cell;
 import io.broccoli.core.Row;
+import io.broccoli.core.Type;
 
 /**
  * @author nicola
@@ -38,6 +38,16 @@ public class BasicCountAggregate implements Aggregate<Long> {
     }
 
     @Override
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public Type type() {
+        return Type.INTEGER;
+    }
+
+    @Override
     public Aggregate<Long> add(Row row) {
         return new BasicCountAggregate(name, count + 1);
     }
@@ -48,8 +58,8 @@ public class BasicCountAggregate implements Aggregate<Long> {
     }
 
     @Override
-    public Cell get() {
-        return new BasicCell(name, Long.class, count);
+    public Long get() {
+        return count;
     }
 
     @Override

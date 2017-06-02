@@ -16,13 +16,11 @@
 package io.broccoli.util;
 
 import io.broccoli.core.Event;
-import io.broccoli.core.basic.BasicCell;
 import io.broccoli.core.basic.BasicEvent;
 import io.broccoli.core.basic.BasicRow;
 import io.broccoli.versioning.Version;
 
 import javaslang.collection.List;
-import javaslang.control.Option;
 
 /**
  * @author nicola
@@ -34,21 +32,11 @@ public final class TestEventFactory {
     }
 
     public static Event add(Version version, String... data) {
-        return add(version, Option.none(), data);
-    }
-
-    public static Event add(Version version, Option<String> prefix, String... data) {
-        int[] idx = new int[]{0};
-        return new BasicEvent(new BasicRow(List.of(data).map(o -> new BasicCell(prefix.getOrElse("s") + (idx[0]++), String.class, o))), Event.EventType.ADD, version);
+        return new BasicEvent(new BasicRow(List.of(data)), Event.EventType.ADD, version);
     }
 
     public static Event remove(Version version, String... data) {
-        return remove(version, Option.none(), data);
-    }
-
-    public static Event remove(Version version, Option<String> prefix, String... data) {
-        int[] idx = new int[]{0};
-        return new BasicEvent(new BasicRow(List.of(data).map(o -> new BasicCell(prefix.getOrElse("s") + (idx[0]++), String.class, o))), Event.EventType.REMOVE, version);
+        return new BasicEvent(new BasicRow(List.of(data)), Event.EventType.REMOVE, version);
     }
 
 }

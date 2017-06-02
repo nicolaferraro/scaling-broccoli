@@ -69,7 +69,7 @@ public class BasicQueryBuilder implements Query.Builder {
         @Override
         public Table buildQuery(Version version) {
 
-            List<Streamable> streams = tables.map(name -> database.table(name).get()).map(t -> new BasicReplayableReplayer(t.name(), t, version, database.versioningSystem()));
+            List<Streamable> streams = tables.map(name -> database.table(name).get()).map(t -> new BasicTableReplayer(t.name(), t, version, database.versioningSystem()));
             BasicCartesianStreamable cartesian = new BasicCartesianStreamable("cartesian(" + tables.mkString(",") + ")", database.versioningSystem(), streams.toJavaArray(Streamable.class));
             BasicProjectionStreamable projection = new BasicProjectionStreamable("projection(" + cartesian.name() + ")", cartesian, database.versioningSystem(), columns.toJavaArray(String.class));
 

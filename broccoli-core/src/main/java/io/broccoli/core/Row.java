@@ -15,7 +15,7 @@
  */
 package io.broccoli.core;
 
-import javaslang.collection.Traversable;
+import javaslang.collection.Seq;
 
 /**
  * @author nicola
@@ -23,12 +23,10 @@ import javaslang.collection.Traversable;
  */
 public interface Row {
 
-    int size();
+    Seq<Object> cells();
 
-    Traversable<Cell> cells();
-
-    Cell cell(int pos);
-
-    Cell cell(String name);
+    default Object cell(int pos) {
+        return cells().get(pos);
+    }
 
 }
