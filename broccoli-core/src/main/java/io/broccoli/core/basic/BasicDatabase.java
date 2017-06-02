@@ -20,8 +20,12 @@ import io.broccoli.core.Event;
 import io.broccoli.core.Query;
 import io.broccoli.core.Streamable;
 import io.broccoli.core.Table;
+import io.broccoli.core.TableEvent;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
+
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 
 import javaslang.collection.HashMap;
 import javaslang.collection.List;
@@ -31,6 +35,7 @@ import javaslang.collection.Traversable;
 import javaslang.control.Option;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.ReplayProcessor;
+import reactor.core.publisher.TopicProcessor;
 
 /**
  * @author nicola
@@ -46,11 +51,23 @@ public class BasicDatabase implements Database {
 
     private boolean started;
 
-    private BasicDatabase(VersioningSystem v, Seq<Table> tables) {
+    private TopicProcessor<TableEvent> events;
+
+    private BasicDatabase(VersioningSystem v, Seq<Table> tables, TopicProcessor<TableEvent> events) {
         this.v = v;
         this.tables = tables;
         this.currentVersion = ReplayProcessor.cacheLast();
         this.started = false;
+        this.events = events;
+    }
+
+    @Override
+    public Subscriber<TableEvent> subscriber() {
+        return events;
+    }
+
+    public Publisher<TableEvent> events() {
+        return events;
     }
 
     @Override
@@ -106,13 +123,16 @@ public class BasicDatabase implements Database {
 
         private Map<String, Table> tables;
 
+        private Option<TopicProcessor<TableEvent>> events;
+
         public Builder(VersioningSystem v) {
-            this(v, HashMap.empty());
+            this(v, HashMap.empty(), Option.none());
         }
 
-        private Builder(VersioningSystem v, Map<String, Table> tables) {
+        private Builder(VersioningSystem v, Map<String, Table> tables, Option<TopicProcessor<TableEvent>> events) {
             this.v = v;
             this.tables = tables;
+            this.events = events;
         }
 
         @Override
@@ -120,7 +140,12 @@ public class BasicDatabase implements Database {
             if (tables.keySet().contains(table.name())) {
                 throw new IllegalArgumentException("Name already present: " + table.name());
             }
-            return new Builder(v, tables.put(table.name(), table));
+            return new Builder(v, tables.put(table.name(), table), events);
+        }
+
+        @Override
+        public Database.Builder eventsProcessor(TopicProcessor<TableEvent> events) {
+            return new Builder(v, tables, Option.of(events));
         }
 
         @Override
@@ -128,7 +153,7 @@ public class BasicDatabase implements Database {
             if (tables.size() == 0) {
                 throw new IllegalStateException("No tables defined");
             }
-            return new BasicDatabase(v, tables.values());
+            return new BasicDatabase(v, tables.values(), events.get());
         }
     }
 }

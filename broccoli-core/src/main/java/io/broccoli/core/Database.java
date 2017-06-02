@@ -18,9 +18,12 @@ package io.broccoli.core;
 import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
+import org.reactivestreams.Subscriber;
+
 import javaslang.collection.Traversable;
 import javaslang.control.Option;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.TopicProcessor;
 
 /**
  * @author nicola
@@ -40,9 +43,13 @@ public interface Database {
 
     Flux<Version> currentVersion();
 
+    Subscriber<TableEvent> subscriber();
+
     interface Builder {
 
         Builder sourceTable(Table table);
+
+        Builder eventsProcessor(TopicProcessor<TableEvent> events);
 
         Database build();
 
