@@ -12,6 +12,16 @@ public interface Structured {
 
     List<Type> types();
 
+    default List<String> unqualifiedNames() {
+        return names().map(n -> {
+            if (n.contains(".")) {
+                return n.substring(n.lastIndexOf(".") + 1);
+            } else {
+                return n;
+            }
+        });
+    }
+
     default String name(int pos) {
         return names().get(pos);
     }

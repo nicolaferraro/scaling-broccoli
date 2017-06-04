@@ -6,6 +6,7 @@ package io.broccoli.core;
  */
 public enum Type {
 
+    BOOLEAN(Boolean.class),
     INTEGER(Long.class),
     STRING(String.class);
 
@@ -24,6 +25,8 @@ public enum Type {
             return Type.STRING;
         } else if (Long.class.isAssignableFrom(type) || Integer.class.isAssignableFrom(type)) {
             return Type.INTEGER;
+        } else if (Boolean.class.isAssignableFrom(type)) {
+            return Type.BOOLEAN;
         } else {
             throw new IllegalArgumentException("Unsupported java type: " + type);
         }

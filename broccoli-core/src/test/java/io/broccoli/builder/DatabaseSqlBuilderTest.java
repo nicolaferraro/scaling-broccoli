@@ -32,7 +32,8 @@ public class DatabaseSqlBuilderTest {
 
         Flux.just(
                 TestEventFactory.add("products", v.next(), 1, "iPhone 7", "Apple iPhone 7"),
-                TestEventFactory.add("products", v.next(), 2, "OnePlus 3", "OnePlus 3")
+                TestEventFactory.add("products", v.next(), 2, "OnePlus 3", "OnePlus 3"),
+                TestEventFactory.add("sales", v.next(), 1, 1, 10)
         ).subscribe(db.subscriber());
 
         db.start();
@@ -51,6 +52,14 @@ public class DatabaseSqlBuilderTest {
 
         assertEquals("Apple iPhone 7", rows.get(0).cell(0));
         assertEquals("OnePlus 3", rows.get(1).cell(0));
+
+        Table result2 = db.newQueryBuilder()
+                .select("s.price")
+                .from("sales_full")
+                .buildQuery(v.current());
+
+        result2.changes().collectList().block(Duration.ofSeconds(5));
+        assertEquals(1, result2.stream(v.current()).collectList().block().size());
     }
 
 }

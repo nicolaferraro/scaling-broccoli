@@ -1,5 +1,6 @@
 package io.broccoli.sql.ast;
 
+import javaslang.control.Option;
 import lombok.Data;
 
 /**
@@ -12,5 +13,9 @@ public class SourceSelectionAST {
     private String name;
 
     private String alias;
+
+    public String getNameOrAlias() {
+        return Option.of(alias).getOrElse(name);
+    }
 
 }

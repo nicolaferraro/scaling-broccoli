@@ -68,11 +68,14 @@ public class BasicFilterStreamable implements Streamable {
     public Flux<Event> changes() {
         return source.changes()
                 .map(e -> {
-                    if (filter.test(e.row())) {
-                        return e;
-                    } else {
-                        return new BasicNoopEvent(e.version());
+                    if (e.eventType() != Event.EventType.NOOP) {
+                        if (filter.test(e.row())) {
+                            return e;
+                        } else {
+                            return new BasicNoopEvent(e.version());
+                        }
                     }
+                    return e;
                 });
     }
 
