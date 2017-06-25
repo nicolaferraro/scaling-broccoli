@@ -1,7 +1,5 @@
-package io.broccoli.builder;
+package io.broccoli.sql.builder;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -19,8 +17,10 @@ import io.broccoli.core.basic.BasicDatabase;
 import io.broccoli.core.basic.BasicFilterStreamable;
 import io.broccoli.core.basic.BasicFluxStreamable;
 import io.broccoli.core.basic.BasicNoopEvent;
+import io.broccoli.core.basic.BasicProjectionStreamable;
 import io.broccoli.core.basic.BasicSetCacheStreamable;
 import io.broccoli.core.basic.BasicTableRenamer;
+import io.broccoli.core.basic.BasicTableReplayer;
 import io.broccoli.sql.ast.ColumnDefinitionAST;
 import io.broccoli.sql.ast.ColumnTypeAST;
 import io.broccoli.sql.ast.DatabaseAST;
@@ -29,12 +29,12 @@ import io.broccoli.sql.ast.ExpressionBinaryOperationAST;
 import io.broccoli.sql.ast.ExpressionColumnAST;
 import io.broccoli.sql.ast.ExpressionLiteralAST;
 import io.broccoli.sql.ast.ExpressionUnaryOperatorAST;
-import io.broccoli.sql.ast.ResultColumnAST;
 import io.broccoli.sql.ast.SelectStatementAST;
+import io.broccoli.sql.ast.SourceSelectionAST;
 import io.broccoli.sql.ast.TableDefinitionAST;
 import io.broccoli.sql.ast.ViewDefinitionAST;
-import io.broccoli.sql.parser.BroccoliDatabaseParser;
 import io.broccoli.versioning.BasicVersioningSystem;
+import io.broccoli.versioning.Version;
 import io.broccoli.versioning.VersioningSystem;
 
 import javaslang.collection.HashMap;
@@ -45,18 +45,14 @@ import reactor.core.publisher.TopicProcessor;
 
 /**
  * @author nicola
- * @since 21/05/2017
+ * @since 25/06/2017
  */
-public class DatabaseSqlBuilder {
+public final class BuilderASTConversions {
 
-    private BroccoliDatabaseParser parser = new BroccoliDatabaseParser();
-
-    public DatabaseSqlBuilder() {
+    private BuilderASTConversions() {
     }
 
-    public Database build(InputStream is) throws IOException {
-        DatabaseAST ast = parser.build(is);
-
+    public static Database fromAST(DatabaseAST ast) {
         VersioningSystem v = new BasicVersioningSystem();
         TopicProcessor<TableEvent> events = TopicProcessor.create();
         Map<String, Table> tables = HashMap.empty();
@@ -71,20 +67,14 @@ public class DatabaseSqlBuilder {
         }
 
         for (ViewDefinitionAST viewAST : ast.getViews()) {
-            Table view = fromAST(viewAST, events, v, tables);
+            Table view = fromAST(viewAST, v, tables);
             tables = tables.put(view.name(), view);
             db = db.sourceTable(view);
         }
-
         return db.build();
     }
 
-    public Database build(String content) {
-        DatabaseAST database = parser.build(content);
-        return null;
-    }
-
-    private Table fromAST(TableDefinitionAST ast, TopicProcessor<TableEvent> events, VersioningSystem v) {
+    public static Table fromAST(TableDefinitionAST ast, TopicProcessor<TableEvent> events, VersioningSystem v) {
         List<String> names = ast.getColumns().map(ColumnDefinitionAST::getName);
         List<Type> types = ast.getColumns().map(def -> fromAST(def.getType()));
 
@@ -96,16 +86,16 @@ public class DatabaseSqlBuilder {
         return new BasicSetCacheStreamable(ast.getName(), streamable, v);
     }
 
-    private Table fromAST(ViewDefinitionAST ast, TopicProcessor<TableEvent> events, VersioningSystem v, Map<String, Table> tables) {
-        Streamable query = fromAST(ast.getQuery(), events, v, tables);
+    public static Table fromAST(ViewDefinitionAST ast, VersioningSystem v, Map<String, Table> tables) {
+        Streamable query = fromAST(ast.getQuery(), v, tables, false, null);
         return new BasicSetCacheStreamable(ast.getName(), query, v);
     }
 
-    private Streamable fromAST(SelectStatementAST ast, TopicProcessor<TableEvent> events, VersioningSystem v, Map<String, Table> tables) {
+    public static Streamable fromAST(SelectStatementAST ast, VersioningSystem v, Map<String, Table> tables, boolean replay, Version version) {
         List<BasicTableRenamer> sources = ast
                 .getSourceSelections()
                 .map(ss -> new BasicTableRenamer(
-                        tables.get(ss.getName()).getOrElseThrow(() -> new IllegalArgumentException("Unknown table " + ss.getName())), ss.getNameOrAlias())
+                        toReplay(tables.get(ss.getName()).getOrElseThrow(() -> new IllegalArgumentException("Unknown table " + ss.getName())), replay, version, v), ss.getNameOrAlias())
                 );
 
 
@@ -116,9 +106,10 @@ public class DatabaseSqlBuilder {
         );
 
 
-        Expression fun = fromAST(ast.getFilter(), cartesian);
+        Expression fun = (ast.getFilter() != null) ? fromAST(ast.getFilter(), cartesian) : null;
+
         Predicate<Row> filter = row -> {
-            Object res = fun.evaluate(row);
+            Object res = (fun != null) ? fun.evaluate(row) : true;
             if (res instanceof Boolean) {
                 return (Boolean) res;
             } else {
@@ -128,10 +119,39 @@ public class DatabaseSqlBuilder {
 
         BasicFilterStreamable filtered = new BasicFilterStreamable("filter", filter, cartesian);
 
-        return filtered;
+        List<String> cols = ast.getResultColumns().flatMap(rc -> {
+            if (rc.isWildcard()) {
+                if (rc.getTableName() != null) {
+                    return filtered.names().filter(n -> n.startsWith(rc.getTableName() + "."));
+                } else {
+                    return filtered.names();
+                }
+            } else if (rc.getExpression() instanceof ExpressionColumnAST) {
+                ExpressionColumnAST colExpr = (ExpressionColumnAST) rc.getExpression();
+                return colExpr.getTableName() != null ? List.of(colExpr.getTableName() + "." + colExpr.getColumnName()) : List.of(colExpr.getColumnName());
+            } else {
+                throw new IllegalStateException("Generic expressions not supported");
+            }
+
+        }).map(c -> {
+            if (filtered.names().contains(c)) {
+                return c;
+            } else {
+                return filtered.names().filter(n -> n.endsWith(c)).head();
+            }
+        });
+
+        return new BasicProjectionStreamable("result", filtered, v, cols.toJavaArray(String.class));
     }
 
-    private Expression fromAST(ExpressionAST expressionAST, Structured schema) {
+    private static Table toReplay(Table table, boolean replay, Version version, VersioningSystem v) {
+        if (replay) {
+            return new BasicTableReplayer(table.name(), table, version, v);
+        }
+        return table;
+    }
+
+    public static Expression fromAST(ExpressionAST expressionAST, Structured schema) {
         if (expressionAST instanceof ExpressionUnaryOperatorAST) {
             return fromAST((ExpressionUnaryOperatorAST)expressionAST, schema);
         } else if (expressionAST instanceof ExpressionBinaryOperationAST) {
@@ -145,7 +165,7 @@ public class DatabaseSqlBuilder {
         }
     }
 
-    private Expression fromAST(ExpressionUnaryOperatorAST expressionAST, Structured schema) {
+    public static Expression fromAST(ExpressionUnaryOperatorAST expressionAST, Structured schema) {
         Supplier<Expression> sub = () -> fromAST(expressionAST.getSubExpression(), schema);
 
         switch (expressionAST.getOperator()) {
@@ -156,7 +176,7 @@ public class DatabaseSqlBuilder {
         }
     }
 
-    private Expression fromAST(ExpressionBinaryOperationAST expressionAST, Structured schema) {
+    public static Expression fromAST(ExpressionBinaryOperationAST expressionAST, Structured schema) {
         Supplier<Expression> left = () -> fromAST(expressionAST.getLeftExpression(), schema);
         Supplier<Expression> right = () -> fromAST(expressionAST.getRightExpression(), schema);
 
@@ -168,7 +188,7 @@ public class DatabaseSqlBuilder {
         }
     }
 
-    private Expression fromAST(ExpressionLiteralAST expressionAST, Structured schema) {
+    public static Expression fromAST(ExpressionLiteralAST expressionAST, Structured schema) {
         return new Expression() {
             @Override
             public Object evaluate(Row row) {
@@ -183,7 +203,7 @@ public class DatabaseSqlBuilder {
         };
     }
 
-    private Expression fromAST(ExpressionColumnAST expressionAST, Structured schema) {
+    public static Expression fromAST(ExpressionColumnAST expressionAST, Structured schema) {
         return new Expression() {
             int pos;
             {
@@ -201,7 +221,7 @@ public class DatabaseSqlBuilder {
         };
     }
 
-    private Type fromAST(ColumnTypeAST ast) {
+    public static Type fromAST(ColumnTypeAST ast) {
         switch (ast) {
         case INTEGER:
             return Type.INTEGER;
@@ -212,7 +232,7 @@ public class DatabaseSqlBuilder {
         }
     }
 
-    private Event noopIfNoMatch(TableEvent event, String table) {
+    private static Event noopIfNoMatch(TableEvent event, String table) {
         if (table.equals(event.table())) {
             return event;
         } else {

@@ -15,13 +15,12 @@
  */
 package io.broccoli.core.basic;
 
+import java.util.Objects;
+
 import io.broccoli.core.Database;
 import io.broccoli.core.Query;
-import io.broccoli.core.Streamable;
-import io.broccoli.core.Table;
+import io.broccoli.sql.builder.QueryBuilder;
 import io.broccoli.versioning.Version;
-
-import javaslang.collection.List;
 
 /**
  * @author nicola
@@ -30,50 +29,38 @@ import javaslang.collection.List;
 public class BasicQueryBuilder implements Query.Builder {
 
     private Database database;
-    private List<String> tables;
-    private List<String> columns;
+
+    private String sql;
+
+    private Version version;
 
     public BasicQueryBuilder(Database database) {
         this.database = database;
     }
 
     @Override
-    public BasicFromClauseBuilder select(String... columns) {
-        BasicQueryBuilder.this.columns = List.of(columns);
-        return new BasicFromClauseBuilder();
+    public Query.Builder version(Version version) {
+        this.version = version;
+        return this;
     }
 
-    public class BasicFromClauseBuilder implements Query.FromClauseBuilder {
-        @Override
-        public BasicWhereClauseBuilder from(String... tables) {
-            BasicQueryBuilder.this.tables = List.of(tables);
-            return new BasicWhereClauseBuilder();
-        }
+    @Override
+    public Query.Builder query(String sql) {
+        this.sql = sql;
+        return this;
     }
 
-    public class BasicWhereClauseBuilder extends BasicQueryFinalizerBuilder implements Query.WhereClauseBuilder {
+    @Override
+    public Query build() {
+        Database database = Objects.requireNonNull(this.database, "database");
+        String sql = Objects.requireNonNull(this.sql, "sql");
 
-    }
-
-    public class BasicQueryFinalizerBuilder implements Query.QueryFinalizerBuilder {
-        @Override
-        public Table buildStructure() {
-
-            List<Table> streams = tables.map(name -> database.table(name).get());
-            BasicCartesianStreamable cartesian = new BasicCartesianStreamable("cartesian(" + tables.mkString(",") + ")", database.versioningSystem(), streams.toJavaArray(Table.class));
-            BasicProjectionStreamable projection = new BasicProjectionStreamable("projection(" + cartesian.name() + ")", cartesian, database.versioningSystem(), columns.toJavaArray(String.class));
-
-            return projection;
+        Version version = this.version;
+        if (version == null) {
+            version = database.versioningSystem().current();
         }
 
-        @Override
-        public Table buildQuery(Version version) {
-
-            List<Streamable> streams = tables.map(name -> database.table(name).get()).map(t -> new BasicTableReplayer(t.name(), t, version, database.versioningSystem()));
-            BasicCartesianStreamable cartesian = new BasicCartesianStreamable("cartesian(" + tables.mkString(",") + ")", database.versioningSystem(), streams.toJavaArray(Streamable.class));
-            BasicProjectionStreamable projection = new BasicProjectionStreamable("projection(" + cartesian.name() + ")", cartesian, database.versioningSystem(), columns.toJavaArray(String.class));
-
-            return projection;
-        }
+        QueryBuilder builder = new QueryBuilder(database);
+        return builder.build(sql, version);
     }
 }

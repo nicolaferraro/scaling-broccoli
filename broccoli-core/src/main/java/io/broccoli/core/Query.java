@@ -21,28 +21,13 @@ import io.broccoli.versioning.Version;
  * @author nicola
  * @since 18/04/2017
  */
-public interface Query {
+public interface Query extends Table {
 
     interface Builder {
-        FromClauseBuilder select(String... columns);
-    }
+        Builder version(Version version);
+        Builder query(String sql);
 
-    interface FromClauseBuilder {
-
-        WhereClauseBuilder from(String... tables);
-
-    }
-
-    interface WhereClauseBuilder extends QueryFinalizerBuilder {
-
-    }
-
-    interface QueryFinalizerBuilder {
-
-        Table buildStructure();
-
-        Table buildQuery(Version version);
-
+        Query build();
     }
 
 }

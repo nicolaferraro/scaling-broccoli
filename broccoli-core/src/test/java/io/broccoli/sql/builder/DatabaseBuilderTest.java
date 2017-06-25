@@ -1,9 +1,10 @@
-package io.broccoli.builder;
+package io.broccoli.sql.builder;
 
 import java.io.IOException;
 import java.time.Duration;
 
 import io.broccoli.core.Database;
+import io.broccoli.core.Query;
 import io.broccoli.core.Row;
 import io.broccoli.core.Table;
 import io.broccoli.util.TestEventFactory;
@@ -20,12 +21,12 @@ import static org.junit.Assert.assertEquals;
  * @author nicola
  * @since 02/06/2017
  */
-public class DatabaseSqlBuilderTest {
+public class DatabaseBuilderTest {
 
     @Test
     public void testBuildSalesDatabase() throws IOException {
 
-        DatabaseSqlBuilder builder = new DatabaseSqlBuilder();
+        DatabaseBuilder builder = new DatabaseBuilder();
         Database db = builder.build(getClass().getResourceAsStream("/sales.sql"));
 
         VersioningSystem v = db.versioningSystem();
@@ -39,10 +40,9 @@ public class DatabaseSqlBuilderTest {
         db.start();
         db.currentVersion().last().block(Duration.ofSeconds(5)); // wait for db full
 
-        Table result = db.newQueryBuilder()
-                .select("description")
-                .from("products")
-                .buildQuery(v.current());
+        Query result = db.newQueryBuilder()
+                .query("select description from products")
+                .build();
 
         result.changes().last().block(Duration.ofSeconds(5));
 
@@ -53,10 +53,9 @@ public class DatabaseSqlBuilderTest {
         assertEquals("Apple iPhone 7", rows.get(0).cell(0));
         assertEquals("OnePlus 3", rows.get(1).cell(0));
 
-        Table result2 = db.newQueryBuilder()
-                .select("s.price")
-                .from("sales_full")
-                .buildQuery(v.current());
+        Query result2 = db.newQueryBuilder()
+                .query("select s.price from sales_full")
+                .build();
 
         result2.changes().collectList().block(Duration.ofSeconds(5));
         assertEquals(1, result2.stream(v.current()).collectList().block().size());

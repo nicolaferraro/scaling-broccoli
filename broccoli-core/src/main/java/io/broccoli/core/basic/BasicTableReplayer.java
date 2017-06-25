@@ -16,6 +16,7 @@
 package io.broccoli.core.basic;
 
 import io.broccoli.core.Event;
+import io.broccoli.core.Row;
 import io.broccoli.core.Streamable;
 import io.broccoli.core.Table;
 import io.broccoli.core.Type;
@@ -29,7 +30,7 @@ import reactor.core.publisher.Flux;
  * @author nicola
  * @since 18/04/2017
  */
-public class BasicTableReplayer implements Streamable {
+public class BasicTableReplayer implements Table {
 
     private String name;
     private Table table;
@@ -41,6 +42,11 @@ public class BasicTableReplayer implements Streamable {
         this.table = table;
         this.version = version;
         this.v = v;
+    }
+
+    @Override
+    public Flux<Row> stream(Version version) {
+        return table.stream(version);
     }
 
     @Override
