@@ -13,3 +13,7 @@ A too complicated project with a randomly generated name.
 * [ ] Support aggregations in SQL
 * [ ] Support sub queries in SQL
 * [ ] Support streaming queries
+
+## Info
+
+* [Architecture](docs/architecture.md)

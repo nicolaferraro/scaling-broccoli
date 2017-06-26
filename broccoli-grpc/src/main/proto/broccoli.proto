@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+package io.broccoli.grpc;
+
+service Broccoli {
+
+  rpc Query (Request) returns (stream Row) {}
+
+}
+
+message Request {
+
+  string sql = 1;
+
+}
+
+message Row {
+
+    message Cell {
+        Type type = 1;
+
+        oneof Data {
+            string string = 2;
+            int64 int = 3;
+            bool boolean = 4;
+        }
+    }
+
+    enum Type {
+        STRING = 0;
+        INTEGER = 1;
+        BOOLEAN = 2;
+    }
+
+    repeated Cell cells = 1;
+
+}
